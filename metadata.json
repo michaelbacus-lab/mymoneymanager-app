@@ -1,0 +1,6 @@
+{
+  "name": "Money Manager",
+  "description": "Personal finance app with savings goals, interactive charts, recurring transactions, and AI category suggestions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

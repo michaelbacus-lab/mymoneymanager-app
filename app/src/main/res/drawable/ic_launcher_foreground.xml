@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Wallet Card Base -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,36 h44 c3.3,0 6,2.7 6,6 v26 c0,3.3 -2.7,6 -6,6 H32 c-3.3,0 -6,-2.7 -6,-6 V42 c0,-3.3 2.7,-6 6,-6 z" />
+    <!-- Wallet Flap & Details -->
+    <path
+        android:fillColor="#E8372A"
+        android:pathData="M64,48 h18 v14 H64 c-3.8,0 -7,-3.1 -7,-7 0,-3.9 3.2,-7 7,-7 z" />
+    <!-- Flap Clasp Button -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M66,55 a2,2 0 1,0 0.001,0 z" />
+    <!-- Dollar / Peso Coin Symbol above wallet -->
+    <path
+        android:fillColor="#FFE8E6"
+        android:pathData="M36,44 h24 v4 H36 z" />
+</vector>

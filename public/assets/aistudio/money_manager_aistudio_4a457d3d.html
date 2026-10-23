@@ -1,0 +1,2974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Money Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════ ROOT TOKENS ═══════════════════ */
+:root{
+  --red:#E8372A;--red-lt:#FFEFEE;
+  --blue:#2A74E8;--blue-lt:#EEF3FF;
+  --green:#1DA462;--green-lt:#EAFAF2;
+  --orange:#F07A1A;--orange-lt:#FEF3E8;
+  --purple:#7B4FD4;--purple-lt:#F3EEFF;
+  --teal:#0FA898;--teal-lt:#E6F7F6;
+  --yellow:#D4A017;--yellow-lt:#FFFBE6;
+  --pink:#D4367A;--pink-lt:#FDEEF5;
+  --gray:#8C8C8C;--gray-lt:#F5F5F5;
+  --ink:#1A1A1A;--ink2:#3D3D3D;--ink3:#6B6B6B;--ink4:#ABABAB;
+  --line:#EBEBEB;--bg:#F0F0F0;--card:#FFFFFF;
+  --font:'Roboto',sans-serif;--hh:48px;
+}
+
+[data-theme="dark"]{
+  --bg:#1A1A1A;
+  --card:#2A2A2A;
+  --ink:#F0F0F0;
+  --ink2:#DCDCDC;
+  --ink3:#A0A0A0;
+  --ink4:#707070;
+  --line:rgba(255,255,255,0.08);
+  --gray-lt:#333333;
+  --red-lt:#3B1B18;
+  --blue-lt:#182844;
+  --green-lt:#143525;
+  --orange-lt:#382414;
+  --purple-lt:#281D42;
+  --teal-lt:#112F2C;
+  --yellow-lt:#382D12;
+  --pink-lt:#3B1B29;
+}
+
+*{
+  box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;
+  transition:background-color 0.25s ease,color 0.25s ease,border-color 0.25s ease;
+}
+html,body{
+  height:100%;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  font-family:var(--font);-webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+
+/* ═══════════════════ LAYOUT ═══════════════════ */
+.screen{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--bg);max-width:430px;width:100%;margin:0 auto}
+
+/* ═══════════════════ PAGES ═══════════════════ */
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;background:var(--bg)}
+.page.on{display:flex}
+
+/* ═══════════════════ HEADER ═══════════════════ */
+.hdr{height:var(--hh);background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 10px;flex-shrink:0;position:relative}
+.hdr-title{font-size:15.5px;font-weight:500;color:#fff;letter-spacing:.2px;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.hbtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;font-size:17px;color:#fff;flex-shrink:0;transition:background .15s}
+.hbtn:active{background:rgba(255,255,255,.18)}
+.theme-btn{font-size:15px;user-select:none}
+
+/* ═══════════════════ SYNC STATUS PILL ═══════════════════ */
+.sync-pill{
+  display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;padding:3px 7px;
+  border-radius:12px;background:rgba(0,0,0,0.22);color:#fff;cursor:pointer;white-space:nowrap;
+  flex-shrink:0;transition:opacity .3s ease;
+}
+.sync-pill.faded{opacity:0.35}
+.sync-pill-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sync-pill-dot.synced{background:#2ECC71}
+.sync-pill-dot.syncing{background:#F39C12;animation:spin 1s linear infinite}
+.sync-pill-dot.offline{background:#E74C3C}
+.sync-pill-dot.error{background:#E67E22}
+
+/* ═══════════════════ BANNERS (OFFLINE / GUEST) ═══════════════════ */
+.system-banner{
+  padding:7px 12px;font-size:11.5px;font-weight:500;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;z-index:40;border-bottom:1px solid rgba(0,0,0,0.06);
+}
+.banner-offline{background:#FFF3CD;color:#856404;border-color:#FFEEBA}
+.banner-online{background:#D4EDDA;color:#155724;border-color:#C3E6CB}
+.banner-guest{background:#E8F4FD;color:#0C5460;border-color:#BEE5EB}
+.banner-action-btn{
+  font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer;
+  text-decoration:underline;padding:2px 4px;
+}
+
+/* ═══════════════════ PERIOD TABS ═══════════════════ */
+.ptabs{background:var(--red);display:flex;border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0}
+.ptab{flex:1;padding:9px 0;text-align:center;font-size:11px;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;border-bottom:2.5px solid transparent;letter-spacing:.2px;transition:all .15s}
+.ptab.on{color:#fff;border-bottom-color:#fff;font-weight:700}
+
+/* ═══════════════════ SUMMARY BAR ═══════════════════ */
+.sumbar{background:var(--red);padding:9px 14px 12px;display:flex;gap:8px;flex-shrink:0}
+.si{flex:1}
+.si-lbl{font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.4px;margin-bottom:3px;text-transform:uppercase}
+.si-val{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.3px}
+
+/* ═══════════════════ SCROLLABLE BODY ═══════════════════ */
+.body{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;background:var(--bg)}
+.body::-webkit-scrollbar{display:none}
+
+/* ═══════════════════ DATE GROUP & ROW ═══════════════════ */
+.dg{margin-bottom:2px}
+.dg-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 14px 4px;background:var(--bg)}
+.dg-lbl{font-size:11.5px;font-weight:500;color:var(--ink3)}
+.dg-right{display:flex;gap:10px}
+.dg-inc{font-size:11px;color:var(--blue)}
+.dg-exp{font-size:11px;color:var(--red)}
+
+.txcard{background:var(--card);margin-bottom:1px}
+.tx{display:flex;align-items:center;padding:11px 14px;gap:11px;cursor:pointer;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:none}
+.tx:active{background:rgba(255,255,255,.05)}
+.tx-ico{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.tx-mid{flex:1;min-width:0}
+.tx-cat{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-acct{font-size:11px;color:var(--ink4);margin-top:1px}
+.tx-note{font-size:11px;color:var(--ink3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-amt{font-size:14px;font-weight:700;letter-spacing:-.3px;flex-shrink:0;text-align:right}
+.inc{color:var(--blue)}.exp{color:var(--red)}
+.sync-chip{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;background:var(--green-lt);color:var(--green);margin-left:4px}
+
+/* ═══════════════════ FAB ═══════════════════ */
+.fab{position:absolute;bottom:68px;right:16px;width:52px;height:52px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(232,55,42,.45);z-index:50;line-height:1;transition:transform .12s}
+.fab:active{transform:scale(.92)}
+
+/* ═══════════════════ BOTTOM NAV ═══════════════════ */
+.bnav{height:56px;background:var(--card);border-top:1px solid var(--line);display:flex;align-items:center;flex-shrink:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 0}
+.ni:active{opacity:.5}
+.ni-ico{font-size:18px;filter:grayscale(1) opacity(.35);transition:filter .2s}
+.ni-lbl{font-size:9.5px;font-weight:500;color:var(--ink4);letter-spacing:.1px;transition:color .2s}
+.ni.on .ni-ico{filter:none}
+.ni.on .ni-lbl{color:var(--red)}
+
+/* ═══════════════════ MODALS & AUTH (slide-up) ═══════════════════ */
+.modal,.link-modal,.sms-modal,.cat-modal,.goal-modal,.funds-modal,.rec-modal,.auth-modal,.confirm-modal{
+  position:absolute;inset:0;display:none;flex-direction:column;z-index:100;background:var(--bg);
+}
+.modal{background:var(--card)}
+.modal.on,.link-modal.on,.sms-modal.on,.cat-modal.on,.goal-modal.on,.funds-modal.on,.rec-modal.on,.auth-modal.on,.confirm-modal.on{
+  display:flex;animation:su .26s cubic-bezier(.34,1.1,.64,1)
+}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr,.link-hdr,.sms-hdr,.cat-modal-hdr,.goal-hdr,.funds-hdr,.rec-hdr,.auth-hdr{
+  height:var(--hh);background:var(--red);display:flex;align-items:center;padding:0 12px;flex-shrink:0
+}
+.modal-title{flex:1;font-size:16px;font-weight:500;color:#fff;text-align:center}
+.modal-body,.link-body,.sms-body,.cat-modal-body,.goal-body,.funds-body,.rec-body,.auth-body{flex:1;overflow-y:auto;scrollbar-width:none}
+.modal-body::-webkit-scrollbar,.link-body::-webkit-scrollbar,.sms-body::-webkit-scrollbar,.cat-modal-body::-webkit-scrollbar,.goal-body::-webkit-scrollbar,.funds-body::-webkit-scrollbar,.rec-body::-webkit-scrollbar,.auth-body::-webkit-scrollbar{display:none}
+
+/* ═══════════════════ AUTH SCREEN STYLES (FEATURE 1) ═══════════════════ */
+.auth-hero{text-align:center;padding:24px 16px 16px}
+.auth-logo-badge{width:56px;height:56px;border-radius:16px;background:var(--red-lt);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.auth-title{font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.4px}
+.auth-sub{font-size:12px;color:var(--ink3);margin-top:4px}
+.auth-card{background:var(--card);border-radius:14px;padding:20px 18px;margin:0 14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.auth-label{font-size:11px;font-weight:600;color:var(--ink4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block}
+.auth-input-wrap{position:relative;margin-bottom:12px}
+.auth-input{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13.5px;
+  font-family:var(--font);color:var(--ink);outline:none;background:var(--card);transition:border-color .15s;
+}
+.auth-input:focus{border-color:var(--red)}
+.auth-eye{position:absolute;right:12px;top:12px;font-size:16px;color:var(--ink4);cursor:pointer;user-select:none}
+.auth-error-msg{font-size:11px;color:var(--red);margin:-6px 0 10px 4px;display:none}
+.auth-btn{
+  width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:13px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:4px;
+}
+.auth-btn:active{background:#C42A1E}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--ink4);font-size:11.5px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--line)}
+.auth-google-btn{
+  width:100%;background:#202124;color:#fff;border:none;border-radius:10px;padding:11px 14px;
+  font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:10px;font-family:var(--font);transition:background .15s;
+}
+.auth-google-btn:active{background:#000}
+.auth-toggle-link{text-align:center;margin-top:16px;font-size:12.5px;color:var(--ink3)}
+.auth-toggle-link b{color:var(--red);cursor:pointer}
+.auth-guest-link{text-align:center;margin:18px 0 24px;font-size:12px;color:var(--ink4);cursor:pointer;text-decoration:underline}
+
+/* Password Strength Bar */
+.pw-strength-wrap{margin:-4px 0 12px 2px}
+.pw-strength-bar{height:4px;background:var(--gray-lt);border-radius:2px;overflow:hidden;margin-bottom:4px}
+.pw-strength-fill{height:100%;width:0;transition:all .2s ease}
+.pw-strength-lbl{font-size:10px;color:var(--ink4);font-weight:600}
+
+/* Loading Spinner Overlay */
+.auth-spinner-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;
+  z-index:200;flex-direction:column;gap:12px;backdrop-filter:blur(2px);
+}
+.auth-spinner{width:36px;height:36px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ═══════════════════ PROFILE PAGE (FEATURE 4) ═══════════════════ */
+.profile-card{background:var(--card);margin:12px 14px 10px;border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.profile-avatar{width:52px;height:52px;border-radius:50%;background:var(--red);color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.profile-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-email{font-size:11.5px;color:var(--ink3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-meta{font-size:10px;color:var(--ink4);margin-top:4px}
+.profile-edit-link{font-size:11px;font-weight:600;color:var(--red);cursor:pointer;margin-top:4px;display:inline-block}
+
+.device-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--card)}
+.device-row:last-child{border-bottom:none}
+.device-ico{font-size:18px;width:28px}
+.device-nm{font-size:12.5px;font-weight:600;color:var(--ink)}
+.device-time{font-size:10.5px;color:var(--ink4);margin-top:2px}
+.device-rm-btn{font-size:10px;font-weight:700;color:var(--red);background:var(--red-lt);border:none;border-radius:6px;padding:4px 8px;cursor:pointer}
+
+/* ═══════════════════ ADD TX MODAL INTERNALS ═══════════════════ */
+.type-tabs{display:flex;background:var(--card);border-bottom:1px solid var(--line)}
+.ttab{flex:1;padding:12px 0;text-align:center;font-size:14px;font-weight:500;color:var(--ink4);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.ttab.on.et{color:var(--red);border-bottom-color:var(--red)}
+.ttab.on.it{color:var(--blue);border-bottom-color:var(--blue)}
+.ttab.on.tt{color:var(--green);border-bottom-color:var(--green)}
+.amt-disp{background:var(--card);padding:14px 16px 11px;border-bottom:1px solid var(--line);text-align:right}
+.amt-num{font-size:36px;font-weight:300;color:var(--ink);letter-spacing:-1px;min-height:44px}
+.amt-num.has{color:var(--red);font-weight:500}
+.amt-num.has.ic{color:var(--blue)}
+.fsec{background:var(--card);margin-bottom:8px}
+.frow{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line);gap:11px;cursor:pointer;transition:background .1s}
+.frow:last-child{border-bottom:none}
+.frow:active{background:rgba(255,255,255,.05)}
+.frow-ico{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.frow-lbl{font-size:13px;color:var(--ink3);width:70px;flex-shrink:0}
+.frow-val{flex:1;font-size:13px;font-weight:500;color:var(--ink);text-align:right}
+.frow-val.ph{color:var(--ink4);font-weight:400}
+.frow-arr{font-size:14px;color:var(--ink4);margin-left:4px}
+.cgwrap{background:var(--card);padding:11px 14px;margin-bottom:8px}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ctile{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 4px;border-radius:10px;border:1.5px solid transparent;transition:all .15s}
+.ctile:active{opacity:.7}
+.ctile.on{border-color:var(--red);background:var(--red-lt)}
+.ctile-ico{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ctile-nm{font-size:9px;font-weight:500;color:var(--ink3);text-align:center;line-height:1.3}
+.kpad{background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr)}
+.k{padding:16px;text-align:center;font-size:20px;font-weight:400;color:var(--ink);cursor:pointer;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:background .1s}
+.k:nth-child(3n){border-right:none}
+.k:nth-last-child(-n+3){border-bottom:none}
+.k:active{background:var(--gray-lt)}
+.k.del{color:var(--ink3);font-size:17px}
+.k.done{background:var(--red);color:#fff;font-size:14px;font-weight:700}
+.k.done:active{background:#C42A1E}
+
+/* ═══════════════════ AI SUGGESTION BANNER ═══════════════════ */
+.ai-banner{
+  background:var(--purple-lt);border:1px solid rgba(123,79,212,0.3);border-radius:10px;
+  margin:4px 14px 10px;padding:9px 12px;cursor:pointer;display:none;align-items:center;
+  gap:8px;transition:all .2s;
+}
+.ai-banner:active{opacity:.8}
+.ai-banner-txt{font-size:12px;font-weight:600;color:var(--purple);display:flex;align-items:center;gap:6px;flex:1}
+.ai-badge{background:var(--card);padding:3px 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-size:11px}
+.ai-spinner{width:12px;height:12px;border:2px solid var(--purple);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+
+/* ═══════════════════ STATS ═══════════════════ */
+.stabs{display:flex;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0}
+.stab{flex:1;padding:11px 0;text-align:center;font-size:13px;font-weight:500;color:var(--ink4);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.stab.on{color:var(--red);border-bottom-color:var(--red)}
+.stats-sum{background:var(--card);display:flex;padding:14px 16px;gap:8px;margin-bottom:2px;flex-shrink:0}
+.ss{flex:1;text-align:center}
+.ss-lbl{font-size:10px;color:var(--ink4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.ss-val{font-size:16px;font-weight:700;letter-spacing:-.4px}
+.ss-val.inc{color:var(--blue)}.ss-val.exp{color:var(--red)}.ss-val.net{color:var(--green)}
+.pie-wrap{background:var(--card);padding:14px 16px;margin-bottom:2px}
+.pie-title{font-size:12.5px;font-weight:500;color:var(--ink2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.pie-row{display:flex;align-items:center;gap:14px}
+.pie-slice{cursor:pointer;transform-origin:60px 60px;transition:opacity .2s ease,transform .2s ease}
+.pie-slice:hover{opacity:1}
+.pl-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;cursor:pointer;transition:all .15s}
+.pl-item.selected{background:var(--gray-lt);font-weight:700}
+.pl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.pl-nm{font-size:12px;color:var(--ink2);flex:1}
+.pl-pct{font-size:11px;color:var(--ink4);min-width:28px;text-align:right}
+.pl-amt{font-size:12px;font-weight:700;color:var(--ink);min-width:60px;text-align:right}
+.filter-info-bar{background:var(--card);padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.filter-info-txt{font-size:12px;font-weight:600;color:var(--ink)}
+.filter-clear-btn{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;font-weight:700;padding:4px 8px;border-radius:6px}
+.filter-clear-btn:active{background:var(--red-lt)}
+.budget-card{background:var(--card);padding:14px 16px;margin-bottom:2px}
+.bc-title{font-size:12.5px;font-weight:500;color:var(--ink2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.bc-lbl{font-size:10px;color:var(--ink4)}
+.budrow{margin-bottom:13px}
+.budrow:last-child{margin-bottom:0}
+.budrow-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.budrow-nm{font-size:12px;font-weight:500;color:var(--ink2);display:flex;align-items:center;gap:5px}
+.budrow-amts{font-size:11px;color:var(--ink4)}
+.budrow-amts b{color:var(--red)}
+.bbg{height:7px;background:var(--gray-lt);border-radius:4px;overflow:hidden}
+.bbar{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.34,1.2,.64,1)}
+
+/* ═══════════════════ SAVINGS GOALS ═══════════════════ */
+.goal-summary-card{background:var(--card);margin:10px 14px 8px;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.gsc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.gsc-lbl{font-size:11px;font-weight:600;color:var(--ink4);text-transform:uppercase;letter-spacing:.5px}
+.gsc-pct{font-size:14px;font-weight:700;color:var(--ink)}
+.gsc-val{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.5px;margin-bottom:4px}
+.gsc-sub{font-size:12px;color:var(--ink3);margin-bottom:12px}
+.goal-card{background:var(--card);margin:0 14px 10px;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.gc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gc-ico{width:40px;height:40px;border-radius:10px;background:var(--gray-lt);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.gc-nm{font-size:14px;font-weight:600;color:var(--ink);flex:1}
+.gc-pct{font-size:13px;font-weight:700}
+.gc-amts{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:8px}
+.gc-amts b{color:var(--ink);font-weight:600}
+.gc-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.gc-est{font-size:11px;color:var(--ink4)}
+.gc-add-btn{background:var(--red-lt);color:var(--red);border:none;border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer}
+.gc-add-btn:active{opacity:.8}
+
+/* ═══════════════════ RECURRING TRANSACTIONS ═══════════════════ */
+.rec-row{display:flex;align-items:center;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line);gap:11px;transition:opacity .2s}
+.rec-row.paused{opacity:0.5}
+.rec-ico{width:38px;height:38px;border-radius:10px;background:var(--gray-lt);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rec-mid{flex:1;min-width:0}
+.rec-nm{font-size:13px;font-weight:600;color:var(--ink)}
+.rec-detail{font-size:11px;color:var(--ink4);margin-top:2px}
+.rec-due{font-size:10px;font-weight:600;color:var(--blue);margin-top:2px}
+.rec-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.rec-amt{font-size:13px;font-weight:700;color:var(--ink)}
+.rec-actions{display:flex;align-items:center;gap:8px}
+.rec-post-btn{font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;background:var(--blue-lt);color:var(--blue);border:none;cursor:pointer}
+.rec-post-btn:active{opacity:.7}
+
+/* ═══════════════════ ACCOUNTS ═══════════════════ */
+.acct-section{margin-bottom:2px}
+.acct-sec-hd{padding:10px 14px 6px;background:var(--bg);display:flex;justify-content:space-between}
+.acct-sec-nm{font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.6px}
+.acct-sec-total{font-size:11px;font-weight:700;color:var(--ink3)}
+.acct-card{background:var(--card);margin-bottom:1px}
+.acct-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:11px;cursor:pointer;transition:background .1s}
+.acct-row:last-child{border-bottom:none}
+.acct-row:active{background:rgba(255,255,255,.05)}
+.acct-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.acct-info{flex:1}
+.acct-nm{font-size:13px;font-weight:500;color:var(--ink)}
+.acct-sub{font-size:11px;color:var(--ink4);margin-top:1px}
+.acct-bal{font-size:14px;font-weight:700;color:var(--ink);letter-spacing:-.3px;text-align:right}
+.acct-bal.neg{color:var(--red)}
+.linked-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--green-lt);color:var(--green)}
+.nw-banner{background:var(--red);margin:10px 14px;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.nw-lbl{font-size:12px;color:rgba(255,255,255,.7)}
+.nw-val{font-size:20px;font-weight:700;color:#fff;letter-spacing:-.5px}
+
+/* ═══════════════════ MORE & PROFILE ROWS ═══════════════════ */
+.more-card{background:var(--card);margin-bottom:2px}
+.more-row{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line);gap:11px;cursor:pointer;transition:background .1s}
+.more-row:last-child{border-bottom:none}
+.more-row:active{background:rgba(255,255,255,.05)}
+.more-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.more-nm{flex:1;font-size:13px;font-weight:500;color:var(--ink)}
+.more-sub{font-size:11px;color:var(--ink4);margin-top:1px}
+.more-arr{font-size:15px;color:var(--ink4)}
+
+/* ═══════════════════ SECTION LABEL ═══════════════════ */
+.slbl{padding:12px 14px 6px;font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.6px;background:var(--bg)}
+
+/* ═══════════════════ TOAST ═══════════════════ */
+.toast{position:absolute;bottom:66px;left:14px;right:14px;background:rgba(26,26,26,.93);border-radius:9px;padding:11px 14px;font-size:13px;color:#fff;z-index:300;transform:translateY(18px);opacity:0;transition:all .28s cubic-bezier(.34,1.2,.64,1);pointer-events:none;text-align:center}
+.toast.on{transform:translateY(0);opacity:1}
+
+/* ═══════════════════ LINK BANK MODAL ═══════════════════ */
+.bank-tile{display:flex;align-items:center;padding:13px 14px;gap:13px;background:var(--card);border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s}
+.bank-tile:active{background:rgba(255,255,255,.05)}
+.bank-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.bank-info{flex:1}
+.bank-nm{font-size:13px;font-weight:600;color:var(--ink)}
+.bank-type{font-size:11px;color:var(--ink4);margin-top:2px}
+.conn-btn{font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;border:none;cursor:pointer}
+.conn-btn.connected{background:var(--green-lt);color:var(--green)}
+.conn-btn.connect{background:var(--blue-lt);color:var(--blue)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.toggle-info{flex:1}
+.toggle-lbl{font-size:13px;font-weight:500;color:var(--ink)}
+.toggle-sub{font-size:11px;color:var(--ink4);margin-top:2px}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle-knob{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on .toggle-knob{left:20px}
+
+/* ═══════════════════ SMS MODAL ═══════════════════ */
+.sms-notif{display:flex;align-items:flex-start;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--card);cursor:pointer;transition:background .1s}
+.sms-notif:active{background:rgba(255,255,255,.05)}
+.sms-notif.read{opacity:.55}
+.sms-notif-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sms-body-mid{flex:1;min-width:0}
+.sms-sender{font-size:12px;font-weight:700;color:var(--ink)}
+.sms-preview{font-size:11px;color:var(--ink3);margin-top:2px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sms-time{font-size:10px;color:var(--ink4);white-space:nowrap;flex-shrink:0;padding-top:2px}
+.sms-parsed{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;margin-top:5px}
+.sms-parsed.imp{background:var(--green-lt);color:var(--green)}
+.sms-parsed.rev{background:var(--orange-lt);color:var(--orange)}
+
+/* ═══════════════════ CATEGORY MANAGER ═══════════════════ */
+.cat-list-item{display:flex;align-items:center;padding:11px 14px;gap:11px;background:var(--card);border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s}
+.cat-list-item:active{background:rgba(255,255,255,.05)}
+.cat-list-ico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.cat-list-nm{font-size:13px;font-weight:500;color:var(--ink);flex:1}
+.cat-list-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--gray-lt);color:var(--ink4)}
+.cat-delete{font-size:18px;color:var(--ink4);cursor:pointer;padding:4px 6px}
+.new-cat-form{background:var(--card);padding:14px;margin:8px 0 2px}
+.nf-title{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:12px}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.e-pick{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:1.5px solid transparent;background:var(--gray-lt);transition:all .15s}
+.e-pick.on{border-color:var(--red);background:var(--red-lt)}
+.color-grid{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.c-pick{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .15s}
+.c-pick.on{border-color:var(--ink);transform:scale(1.15)}
+.nf-input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;font-family:var(--font);color:var(--ink);outline:none;margin-bottom:12px;background:var(--card)}
+.nf-input:focus{border-color:var(--red)}
+.add-cat-btn{width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.add-cat-btn:active{background:#C42A1E}
+
+/* ═══════════════════ FORM INPUT CONTROLS ═══════════════════ */
+.pill-group{display:flex;gap:6px;margin-bottom:12px}
+.pill-btn{flex:1;padding:8px 0;text-align:center;font-size:12px;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink3);cursor:pointer;transition:all .15s}
+.pill-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+
+.spacer{height:76px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="toast" id="toast"></div>
+
+  <!-- OFFLINE BANNER (FEATURE 5) -->
+  <div class="system-banner banner-offline" id="banner-offline" style="display:none">
+    <span>📶 You're offline — changes will sync when reconnected</span>
+    <button class="banner-action-btn" onclick="triggerManualSync()">Retry</button>
+  </div>
+  <div class="system-banner banner-online" id="banner-online" style="display:none">
+    <span>✅ Back online — syncing your data…</span>
+  </div>
+
+  <!-- GUEST MODE BANNER (FEATURE 6) -->
+  <div class="system-banner banner-guest" id="banner-guest" style="display:none">
+    <span>👤 Guest mode — Sign in to back up and sync your data</span>
+    <button class="banner-action-btn" onclick="showAuthScreen('signin')">[Sign In]</button>
+  </div>
+
+  <!-- ════════════════ PAGE: TRANS ════════════════ -->
+  <div class="page on" id="pg-trans">
+    <div class="hdr">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="sync-pill" id="sync-pill-trans" onclick="triggerManualSync()" title="Cloud Sync Status">
+          <div class="sync-pill-dot synced" id="sync-dot-trans"></div>
+          <span id="sync-text-trans">Synced</span>
+        </div>
+        <div class="hbtn" onclick="cyclePrev()">‹</div>
+      </div>
+      <div class="hdr-title" id="hdr-lbl">June 2025</div>
+      <div style="display:flex;align-items:center;gap:2px">
+        <div class="hbtn" onclick="cycleNext()">›</div>
+        <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+      </div>
+    </div>
+    <div class="ptabs">
+      <div class="ptab on" id="pt-daily"   onclick="setPeriod('daily')">Daily</div>
+      <div class="ptab"    id="pt-cal"     onclick="setPeriod('cal')">Calendar</div>
+      <div class="ptab"    id="pt-weekly"  onclick="setPeriod('weekly')">Weekly</div>
+      <div class="ptab"    id="pt-monthly" onclick="setPeriod('monthly')">Monthly</div>
+      <div class="ptab"    id="pt-total"   onclick="setPeriod('total')">Total</div>
+    </div>
+    <div class="sumbar">
+      <div class="si"><div class="si-lbl">Income</div><div class="si-val" id="s-inc">₱0</div></div>
+      <div class="si" style="text-align:center"><div class="si-lbl">Expense</div><div class="si-val" id="s-exp">₱0</div></div>
+      <div class="si" style="text-align:right"><div class="si-lbl">Total</div><div class="si-val" id="s-total">₱0</div></div>
+    </div>
+    <div class="body" id="trans-body"></div>
+    <div class="fab" id="fab-trans" onclick="showModal()">＋</div>
+  </div>
+
+  <!-- ════════════════ PAGE: STATS ════════════════ -->
+  <div class="page" id="pg-stats">
+    <div class="hdr">
+      <div class="sync-pill" onclick="triggerManualSync()"><div class="sync-pill-dot synced"></div><span>Sync</span></div>
+      <div class="hdr-title">Statistics — June 2025</div>
+      <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+    </div>
+    <div class="stabs">
+      <div class="stab on" onclick="setStat('expense',this)">Expense</div>
+      <div class="stab"    onclick="setStat('income',this)">Income</div>
+      <div class="stab"    onclick="setStat('budget',this)">Budget</div>
+    </div>
+    <div class="body" id="stats-body"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: GOALS ════════════════ -->
+  <div class="page" id="pg-goals">
+    <div class="hdr">
+      <div class="sync-pill" onclick="triggerManualSync()"><div class="sync-pill-dot synced"></div><span>Sync</span></div>
+      <div class="hdr-title">Savings Goals</div>
+      <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+    </div>
+    <div class="body" id="goals-body"></div>
+    <div class="fab" id="fab-goals" onclick="showAddGoalModal()" style="display:none">＋</div>
+  </div>
+
+  <!-- ════════════════ PAGE: ACCOUNTS ════════════════ -->
+  <div class="page" id="pg-accounts">
+    <div class="hdr">
+      <div class="sync-pill" onclick="triggerManualSync()"><div class="sync-pill-dot synced"></div><span>Sync</span></div>
+      <div class="hdr-title">Accounts</div>
+      <div style="display:flex;align-items:center;gap:2px">
+        <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+        <div class="hbtn" style="font-size:14px;font-weight:700" onclick="showLinkModal()">Link</div>
+      </div>
+    </div>
+    <div class="body" id="acct-body"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: PROFILE (FEATURE 4) ════════════════ -->
+  <div class="page" id="pg-profile">
+    <div class="hdr">
+      <div class="sync-pill" onclick="triggerManualSync()"><div class="sync-pill-dot synced"></div><span>Sync</span></div>
+      <div class="hdr-title">My Profile &amp; Cloud</div>
+      <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+    </div>
+    <div class="body" id="profile-body"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: MORE ════════════════ -->
+  <div class="page" id="pg-more">
+    <div class="hdr">
+      <div class="sync-pill" onclick="triggerManualSync()"><div class="sync-pill-dot synced"></div><span>Sync</span></div>
+      <div class="hdr-title">More</div>
+      <div class="hbtn theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</div>
+    </div>
+    <div class="body">
+      <div class="slbl">Connected Features</div>
+      <div class="more-card">
+        <div class="more-row" onclick="showSmsModal()">
+          <div class="more-ico" style="background:var(--green-lt)">📱</div>
+          <div style="flex:1"><div class="more-nm">SMS / Notification Reader</div><div class="more-sub" id="sms-status-lbl">5 new messages detected</div></div>
+          <div class="more-arr">›</div>
+        </div>
+        <div class="more-row" onclick="showLinkModal()">
+          <div class="more-ico" style="background:var(--blue-lt)">🏦</div>
+          <div style="flex:1"><div class="more-nm">Bank &amp; E-Wallet Sync</div><div class="more-sub" id="bank-status-lbl">3 accounts linked</div></div>
+          <div class="more-arr">›</div>
+        </div>
+      </div>
+
+      <div class="slbl">Manage</div>
+      <div class="more-card">
+        <div class="more-row" onclick="showCatModal()">
+          <div class="more-ico" style="background:var(--purple-lt)">🏷️</div>
+          <div style="flex:1"><div class="more-nm">Categories</div><div class="more-sub" id="cat-count-lbl">15 expense · 6 income</div></div>
+          <div class="more-arr">›</div>
+        </div>
+        <div class="more-row" onclick="toast2('Budget Planner opened')">
+          <div class="more-ico" style="background:var(--orange-lt)">🎯</div>
+          <div style="flex:1"><div class="more-nm">Budget Planner</div><div class="more-sub">Set limits per category</div></div>
+          <div class="more-arr">›</div>
+        </div>
+        <div class="more-row" onclick="toast2('Bill Reminders opened')">
+          <div class="more-ico" style="background:var(--yellow-lt)">🔔</div>
+          <div style="flex:1"><div class="more-nm">Bill Reminders</div><div class="more-sub">Meralco due Jun 20 · PLDT due Jun 22</div></div>
+          <div class="more-arr">›</div>
+        </div>
+        <div class="more-row" onclick="exportDataAsJson()">
+          <div class="more-ico" style="background:var(--teal-lt)">📤</div>
+          <div style="flex:1"><div class="more-nm">Export to Excel / CSV / JSON</div><div class="more-sub">Backup full ledger</div></div>
+          <div class="more-arr">›</div>
+        </div>
+      </div>
+
+      <!-- Recurring Transactions -->
+      <div class="slbl">Recurring Transactions</div>
+      <div class="more-card" id="recurring-list-wrap"></div>
+      <div style="padding:10px 14px 4px;background:var(--bg)">
+        <button class="add-cat-btn" style="background:var(--blue);margin-top:0" onclick="showAddRecurringModal()">＋ Add Recurring</button>
+      </div>
+
+      <div class="slbl">Settings</div>
+      <div class="more-card">
+        <div class="more-row"><div class="more-ico" style="background:var(--gray-lt)">💱</div><div style="flex:1"><div class="more-nm">Currency</div><div class="more-sub">PHP — Philippine Peso ₱</div></div><div class="more-arr">›</div></div>
+        <div class="more-row"><div class="more-ico" style="background:var(--gray-lt)">🔒</div><div style="flex:1"><div class="more-nm">Passcode / Biometrics</div><div class="more-sub">Off</div></div><div class="more-arr">›</div></div>
+        <div class="more-row" onclick="goPage('pg-profile','n-profile')"><div class="more-ico" style="background:var(--gray-lt)">☁️</div><div style="flex:1"><div class="more-nm">Backup &amp; Sync</div><div class="more-sub" id="more-backup-sub">Real-time cloud database</div></div><div class="more-arr">›</div></div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ BOTTOM NAV ════════════════ -->
+  <nav class="bnav">
+    <div class="ni on" id="n-trans"    onclick="goPage('pg-trans','n-trans')"><div class="ni-ico">📋</div><div class="ni-lbl">Trans</div></div>
+    <div class="ni"    id="n-stats"    onclick="goPage('pg-stats','n-stats')"><div class="ni-ico">📊</div><div class="ni-lbl">Stats</div></div>
+    <div class="ni"    id="n-goals"    onclick="goPage('pg-goals','n-goals')"><div class="ni-ico">🎯</div><div class="ni-lbl">Goals</div></div>
+    <div class="ni"    id="n-accounts" onclick="goPage('pg-accounts','n-accounts')"><div class="ni-ico">🏦</div><div class="ni-lbl">Accounts</div></div>
+    <div class="ni"    id="n-profile"  onclick="goPage('pg-profile','n-profile')"><div class="ni-ico">👤</div><div class="ni-lbl">Profile</div></div>
+    <div class="ni"    id="n-more"     onclick="goPage('pg-more','n-more')"><div class="ni-ico">⋯</div><div class="ni-lbl">More</div></div>
+  </nav>
+
+  <!-- ════════════════ AUTH SCREEN (FEATURE 1) ════════════════ -->
+  <div class="auth-modal" id="auth-modal">
+    <div class="auth-hdr">
+      <div class="hbtn" id="auth-close-btn" onclick="hideAuthScreen()" style="display:none">✕</div>
+      <div class="modal-title">Money Manager</div>
+      <div style="width:32px"></div>
+    </div>
+    <div class="auth-body">
+      <!-- SIGN IN VIEW -->
+      <div id="auth-signin-view">
+        <div class="auth-hero">
+          <div class="auth-logo-badge">💰</div>
+          <div class="auth-title">Welcome Back</div>
+          <div class="auth-sub">Sign in to sync your finances across devices</div>
+        </div>
+        <div class="auth-card">
+          <label class="auth-label">Email Address</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signin-email" type="email" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <div class="auth-error-msg" id="err-signin-email"></div>
+
+          <label class="auth-label">Password</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signin-pw" type="password" placeholder="••••••••" autocomplete="current-password">
+            <span class="auth-eye" onclick="togglePwVisibility('signin-pw')">👁️</span>
+          </div>
+          <div class="auth-error-msg" id="err-signin-pw"></div>
+
+          <button class="auth-btn" onclick="handleEmailSignIn()">Sign In</button>
+
+          <div class="auth-divider">or</div>
+
+          <button class="auth-google-btn" onclick="handleGoogleSignIn()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.13C3.25 21.32 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.6H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.4l4.01-3.13z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.25 2.68 1.27 6.6l4.01 3.13c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+            Continue with Google
+          </button>
+
+          <div class="auth-toggle-link">Don't have an account? <b onclick="switchAuthView('signup')">Sign Up</b></div>
+        </div>
+        <div class="auth-guest-link" onclick="continueAsGuest()">Continue as Guest (Offline only)</div>
+      </div>
+
+      <!-- SIGN UP VIEW -->
+      <div id="auth-signup-view" style="display:none">
+        <div class="auth-hero">
+          <div class="auth-logo-badge">✨</div>
+          <div class="auth-title">Create Account</div>
+          <div class="auth-sub">Free real-time backup &amp; multi-device sync</div>
+        </div>
+        <div class="auth-card">
+          <label class="auth-label">Full Name</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signup-name" type="text" placeholder="Juan dela Cruz" autocomplete="name">
+          </div>
+          <div class="auth-error-msg" id="err-signup-name"></div>
+
+          <label class="auth-label">Email Address</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signup-email" type="email" placeholder="you@example.com" autocomplete="email">
+          </div>
+          <div class="auth-error-msg" id="err-signup-email"></div>
+
+          <label class="auth-label">Password</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signup-pw" type="password" placeholder="Min. 8 characters" oninput="checkPasswordStrength(this.value)">
+            <span class="auth-eye" onclick="togglePwVisibility('signup-pw')">👁️</span>
+          </div>
+          <div class="pw-strength-wrap">
+            <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-fill"></div></div>
+            <div class="pw-strength-lbl" id="pw-lbl">Strength: enter password</div>
+          </div>
+          <div class="auth-error-msg" id="err-signup-pw"></div>
+
+          <label class="auth-label">Confirm Password</label>
+          <div class="auth-input-wrap">
+            <input class="auth-input" id="signup-pw2" type="password" placeholder="Repeat password">
+            <span class="auth-eye" onclick="togglePwVisibility('signup-pw2')">👁️</span>
+          </div>
+          <div class="auth-error-msg" id="err-signup-pw2"></div>
+
+          <button class="auth-btn" onclick="handleEmailSignUp()">Create Account</button>
+
+          <div class="auth-divider">or</div>
+
+          <button class="auth-google-btn" onclick="handleGoogleSignIn()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.13C3.25 21.32 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.6H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.4l4.01-3.13z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.25 2.68 1.27 6.6l4.01 3.13c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+            Continue with Google
+          </button>
+
+          <div class="auth-toggle-link">Already have an account? <b onclick="switchAuthView('signin')">Sign In</b></div>
+        </div>
+        <div class="auth-guest-link" onclick="continueAsGuest()">Continue as Guest (Offline only)</div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+    <!-- Loading spinner overlay -->
+    <div class="auth-spinner-overlay" id="auth-spinner-overlay">
+      <div class="auth-spinner"></div>
+      <div style="color:#fff;font-size:13px;font-weight:600" id="auth-spinner-lbl">Connecting to cloud…</div>
+    </div>
+  </div>
+
+  <!-- ════════════════ DELETE ALL DATA MODAL ════════════════ -->
+  <div class="confirm-modal" id="delete-confirm-modal">
+    <div class="modal-hdr">
+      <div class="hbtn" onclick="hideDeleteConfirmModal()">✕</div>
+      <div class="modal-title">Delete All Data</div>
+      <div style="width:32px"></div>
+    </div>
+    <div class="modal-body" style="padding:18px">
+      <div style="background:var(--card);border-radius:12px;padding:18px">
+        <div style="font-size:18px;font-weight:700;color:var(--red);margin-bottom:8px">⚠️ Irreversible Action</div>
+        <div style="font-size:12.5px;color:var(--ink3);line-height:1.6;margin-bottom:14px">
+          This will wipe all your transactions, categories, savings goals, recurring rules, and cloud backups forever. Type <b>DELETE</b> to confirm.
+        </div>
+        <input class="nf-input" id="delete-confirm-input" placeholder="Type DELETE in capital letters">
+        <button class="add-cat-btn" style="background:var(--red)" onclick="confirmDeleteAllData()">Permanently Wipe Everything</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ ADD TRANSACTION MODAL ════════════════ -->
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <div class="hbtn" onclick="hideModal()">✕</div>
+      <div class="modal-title" id="m-title">Add Expense</div>
+      <div class="hbtn" onclick="saveEntry()">✔</div>
+    </div>
+    <div class="type-tabs">
+      <div class="ttab on et" onclick="setType('expense',this)">Expense</div>
+      <div class="ttab it"    onclick="setType('income',this)">Income</div>
+      <div class="ttab tt"    onclick="setType('transfer',this)">Transfer</div>
+    </div>
+    <div class="modal-body">
+      <div class="amt-disp"><div class="amt-num" id="m-amt">0</div></div>
+      <div class="fsec">
+        <div class="frow"><div class="frow-ico">🏷️</div><div class="frow-lbl">Category</div><div class="frow-val ph" id="m-cat">Select</div><div class="frow-arr">›</div></div>
+        <div class="frow" onclick="cycleAcct()"><div class="frow-ico">🏦</div><div class="frow-lbl">Account</div><div class="frow-val" id="m-acct">Cash</div><div class="frow-arr">›</div></div>
+        <div class="frow"><div class="frow-ico">📅</div><div class="frow-lbl">Date</div><div class="frow-val" id="m-date">Jun 8, 2025</div><div class="frow-arr">›</div></div>
+        <div class="frow" style="cursor:text" onclick="focusMemoInput()"><div class="frow-ico">📝</div><div class="frow-lbl">Memo</div><input type="text" id="m-memo-input" placeholder="Add note or merchant…" oninput="handleMemoChange(this.value)" style="flex:1;border:none;outline:none;background:transparent;text-align:right;font-size:13px;font-weight:500;color:var(--ink);font-family:var(--font)"><div class="frow-arr">›</div></div>
+      </div>
+
+      <!-- AI SUGGESTION BANNER -->
+      <div class="ai-banner" id="ai-banner" onclick="applyAiSuggestion()">
+        <div class="ai-banner-txt">
+          <span>✨ AI suggests:</span>
+          <span class="ai-badge" id="ai-badge">🍽️ Food</span>
+        </div>
+        <div class="ai-spinner" id="ai-spinner"></div>
+      </div>
+
+      <div class="cgwrap"><div class="cgrid" id="cgrid"></div></div>
+      <div class="kpad">
+        <div class="k" onclick="kp('7')">7</div><div class="k" onclick="kp('8')">8</div><div class="k" onclick="kp('9')">9</div>
+        <div class="k" onclick="kp('4')">4</div><div class="k" onclick="kp('5')">5</div><div class="k" onclick="kp('6')">6</div>
+        <div class="k" onclick="kp('1')">1</div><div class="k" onclick="kp('2')">2</div><div class="k" onclick="kp('3')">3</div>
+        <div class="k" onclick="kp('.')">.</div><div class="k" onclick="kp('0')">0</div><div class="k del" onclick="kp('del')">⌫</div>
+        <div class="k" style="grid-column:span 2;border-right:none;font-size:13px;font-weight:600;color:var(--ink3)" onclick="kp('00')">00</div>
+        <div class="k done" onclick="saveEntry()">SAVE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ ADD GOAL MODAL ════════════════ -->
+  <div class="goal-modal" id="goal-modal">
+    <div class="goal-hdr">
+      <div class="hbtn" onclick="hideAddGoalModal()">✕</div>
+      <div class="modal-title">New Savings Goal</div>
+      <div class="hbtn" onclick="saveGoal()">✔</div>
+    </div>
+    <div class="goal-body" style="padding:14px">
+      <div class="new-cat-form" style="margin:0 0 12px;border-radius:12px">
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Goal Name</div>
+        <input class="nf-input" id="goal-name-input" type="text" placeholder="e.g. Travel, Car, Emergency Fund…" maxlength="30">
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Choose Icon</div>
+        <div class="emoji-grid" id="goal-emoji-grid"></div>
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Target Amount (₱)</div>
+        <input class="nf-input" id="goal-target-input" type="number" placeholder="50000" min="1" step="100">
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Monthly Contribution (₱)</div>
+        <input class="nf-input" id="goal-monthly-input" type="number" placeholder="5000" min="0" step="100">
+
+        <button class="add-cat-btn" onclick="saveGoal()">Save Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ ADD FUNDS MODAL ════════════════ -->
+  <div class="funds-modal" id="funds-modal">
+    <div class="funds-hdr">
+      <div class="hbtn" onclick="hideFundsModal()">✕</div>
+      <div class="modal-title" id="funds-title">Add Funds</div>
+      <div class="hbtn" onclick="confirmAddFunds()">✔</div>
+    </div>
+    <div class="funds-body" style="padding:16px">
+      <div class="new-cat-form" style="margin:0;border-radius:12px">
+        <div id="funds-goal-info" style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px"></div>
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Amount to Add (₱)</div>
+        <input class="nf-input" id="funds-amt-input" type="number" placeholder="1000" min="1" step="100">
+        <div class="pill-group">
+          <div class="pill-btn" onclick="setQuickFunds(500)">+₱500</div>
+          <div class="pill-btn" onclick="setQuickFunds(1000)">+₱1,000</div>
+          <div class="pill-btn" onclick="setQuickFunds(5000)">+₱5,000</div>
+          <div class="pill-btn" onclick="setQuickFunds(10000)">+₱10,000</div>
+        </div>
+        <button class="add-cat-btn" onclick="confirmAddFunds()">Deposit to Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ ADD RECURRING MODAL ════════════════ -->
+  <div class="rec-modal" id="rec-modal">
+    <div class="rec-hdr">
+      <div class="hbtn" onclick="hideAddRecurringModal()">✕</div>
+      <div class="modal-title">New Recurring Payment</div>
+      <div class="hbtn" onclick="saveRecurring()">✔</div>
+    </div>
+    <div class="rec-body" style="padding:14px">
+      <div class="new-cat-form" style="margin:0 0 12px;border-radius:12px">
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Subscription / Bill Name</div>
+        <input class="nf-input" id="rec-name-input" type="text" placeholder="e.g. Netflix, Gym, Rent…" maxlength="30">
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Amount (₱)</div>
+        <input class="nf-input" id="rec-amt-input" type="number" placeholder="549" min="1" step="1">
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Frequency</div>
+        <div class="pill-group" id="rec-freq-group">
+          <div class="pill-btn" onclick="setRecFreq('Daily',this)">Daily</div>
+          <div class="pill-btn" onclick="setRecFreq('Weekly',this)">Weekly</div>
+          <div class="pill-btn on" onclick="setRecFreq('Monthly',this)">Monthly</div>
+          <div class="pill-btn" onclick="setRecFreq('Yearly',this)">Yearly</div>
+        </div>
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Payment Account</div>
+        <select class="nf-input" id="rec-acct-select" style="cursor:pointer"></select>
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Next Due Date</div>
+        <input class="nf-input" id="rec-due-input" type="text" placeholder="e.g. Jul 15, Aug 1">
+
+        <div style="font-size:11px;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Category</div>
+        <div class="cgrid" id="rec-cgrid" style="margin-bottom:14px"></div>
+
+        <button class="add-cat-btn" onclick="saveRecurring()">Save Recurring Template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ LINK BANK MODAL ════════════════ -->
+  <div class="link-modal" id="link-modal">
+    <div class="link-hdr">
+      <div class="hbtn" onclick="hideLinkModal()">✕</div>
+      <div class="modal-title">Bank &amp; E-Wallet Sync</div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="link-body" id="link-body"></div>
+  </div>
+
+  <!-- ════════════════ SMS MODAL ════════════════ -->
+  <div class="sms-modal" id="sms-modal">
+    <div class="sms-hdr">
+      <div class="hbtn" onclick="hideSmsModal()">✕</div>
+      <div class="modal-title">SMS &amp; Notification Reader</div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="sms-body" id="sms-body"></div>
+  </div>
+
+  <!-- ════════════════ CATEGORY MANAGER MODAL ════════════════ -->
+  <div class="cat-modal" id="cat-modal">
+    <div class="cat-modal-hdr">
+      <div class="hbtn" onclick="hideCatModal()">✕</div>
+      <div class="modal-title">Manage Categories</div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="cat-modal-body" id="cat-modal-body"></div>
+  </div>
+
+</div><!-- /screen -->
+
+<!-- HIDDEN FILE INPUT FOR IMPORT -->
+<input type="file" id="json-import-input" accept=".json" style="display:none" onchange="handleFileImport(event)">
+
+<!-- ════════════════ FIREBASE SDK v10+ (Compat) ════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   FIREBASE CONFIG ── replace with your own from Firebase Console ──
+══════════════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+/* ══════════════════════════════════════════════════════════
+   GEMINI AI CONFIGURATION
+══════════════════════════════════════════════════════════ */
+const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+
+/* ══════════════════════════════════════════════════════════
+   UUID GENERATOR FALLBACK
+══════════════════════════════════════════════════════════ */
+function genId(){
+  if(typeof crypto!=='undefined'&&crypto.randomUUID){
+    return crypto.randomUUID();
+  }
+  return 'tx_'+Date.now()+'_'+Math.random().toString(36).substring(2,9);
+}
+
+/* ══════════════════════════════════════════════════════════
+   SEED CATEGORIES
+══════════════════════════════════════════════════════════ */
+let DEFAULT_ECATS=[
+  {id:'food',     nm:'Food',         ico:'🍽️',bg:'var(--orange-lt)',col:'#F07A1A',custom:false},
+  {id:'transport',nm:'Transport',    ico:'🚗',bg:'var(--blue-lt)',  col:'#2A74E8',custom:false},
+  {id:'shopping', nm:'Shopping',     ico:'🛍️',bg:'var(--pink-lt)',  col:'#D4367A',custom:false},
+  {id:'bills',    nm:'Bills',        ico:'⚡',bg:'var(--yellow-lt)',col:'#D4A017',custom:false},
+  {id:'sub',      nm:'Subscription', ico:'🔄',bg:'var(--purple-lt)',col:'#7B4FD4',custom:false},
+  {id:'health',   nm:'Health',       ico:'💊',bg:'var(--green-lt)', col:'#1DA462',custom:false},
+  {id:'leisure',  nm:'Leisure',      ico:'🎮',bg:'var(--teal-lt)',  col:'#0FA898',custom:false},
+  {id:'edu',      nm:'Education',    ico:'📚',bg:'var(--blue-lt)',  col:'#2A74E8',custom:false},
+  {id:'personal', nm:'Personal',     ico:'💄',bg:'var(--pink-lt)',  col:'#D4367A',custom:false},
+  {id:'dining',   nm:'Dining Out',   ico:'🍜',bg:'var(--orange-lt)',col:'#F07A1A',custom:false},
+  {id:'grocery',  nm:'Groceries',    ico:'🛒',bg:'var(--green-lt)', col:'#1DA462',custom:false},
+  {id:'kids',     nm:'Kids',         ico:'👶',bg:'var(--teal-lt)',  col:'#0FA898',custom:false},
+  {id:'travel',   nm:'Travel',       ico:'✈️',bg:'var(--blue-lt)',  col:'#2A74E8',custom:false},
+  {id:'pet',      nm:'Pet',          ico:'🐶',bg:'var(--orange-lt)',col:'#F07A1A',custom:false},
+  {id:'misc',     nm:'Misc',         ico:'📦',bg:'var(--gray-lt)', col:'#8C8C8C',custom:false},
+];
+let DEFAULT_ICATS=[
+  {id:'salary',   nm:'Salary',       ico:'💼',bg:'var(--blue-lt)',  col:'#2A74E8',custom:false},
+  {id:'freelance',nm:'Freelance',    ico:'💻',bg:'var(--teal-lt)',  col:'#0FA898',custom:false},
+  {id:'transfer', nm:'Transfer In',  ico:'💸',bg:'var(--green-lt)', col:'#1DA462',custom:false},
+  {id:'invest',   nm:'Investment',   ico:'📈',bg:'var(--orange-lt)',col:'#F07A1A',custom:false},
+  {id:'gift',     nm:'Gift',         ico:'🎁',bg:'var(--purple-lt)',col:'#7B4FD4',custom:false},
+  {id:'other_i',  nm:'Others',       ico:'💰',bg:'var(--gray-lt)', col:'#8C8C8C',custom:false},
+];
+let ECATS=JSON.parse(JSON.stringify(DEFAULT_ECATS));
+let ICATS=JSON.parse(JSON.stringify(DEFAULT_ICATS));
+
+/* ══════════════════════════════════════════════════════════
+   SEED SAVINGS GOALS
+══════════════════════════════════════════════════════════ */
+let DEFAULT_SAVINGS_GOALS=[
+  {id:'g1',nm:'Emergency Fund',    ico:'🛡️',target:50000, saved:32000,monthly:5000,updatedAt:1717800000000},
+  {id:'g2',nm:'Japan Trip',        ico:'✈️',target:80000, saved:15500,monthly:8000,updatedAt:1717800000000},
+  {id:'g3',nm:'New Laptop',        ico:'💻',target:45000, saved:38000,monthly:5000,updatedAt:1717800000000},
+  {id:'g4',nm:'House Down Payment',ico:'🏠',target:500000,saved:87000,monthly:15000,updatedAt:1717800000000},
+];
+let SAVINGS_GOALS=JSON.parse(JSON.stringify(DEFAULT_SAVINGS_GOALS));
+let selGoalForFunds=null;
+let newGoalEmoji='🎯';
+
+/* ══════════════════════════════════════════════════════════
+   SEED RECURRING TRANSACTIONS
+══════════════════════════════════════════════════════════ */
+let DEFAULT_RECURRING_TX=[
+  {id:'r1',nm:'Netflix',        ico:'🔄',cat:'sub',   amt:549, freq:'Monthly',nextDue:'Jul 19',acct:'BDO Mastercard',enabled:true,updatedAt:1717800000000},
+  {id:'r2',nm:'Spotify',        ico:'🎵',cat:'sub',   amt:179, freq:'Monthly',nextDue:'Jul 5', acct:'BDO Mastercard',enabled:true,updatedAt:1717800000000},
+  {id:'r3',nm:'Adobe CC',       ico:'💻',cat:'sub',   amt:1200,freq:'Monthly',nextDue:'Jul 7', acct:'BDO Mastercard',enabled:true,updatedAt:1717800000000},
+  {id:'r4',nm:'Gym Membership', ico:'🏋️',cat:'health',amt:800, freq:'Monthly',nextDue:'Jul 7', acct:'BDO Mastercard',enabled:true,updatedAt:1717800000000},
+  {id:'r5',nm:'Globe Postpaid', ico:'📱',cat:'bills', amt:1299,freq:'Monthly',nextDue:'Jul 24',acct:'BDO Savings',   enabled:true,updatedAt:1717800000000},
+];
+let RECURRING_TX=JSON.parse(JSON.stringify(DEFAULT_RECURRING_TX));
+let newRecFreq='Monthly',newRecCat='sub';
+
+/* ══════════════════════════════════════════════════════════
+   SEED ACCOUNTS
+══════════════════════════════════════════════════════════ */
+let DEFAULT_ACCOUNTS=[
+  {id:'bdo',     nm:'BDO Unibank',   type:'Bank',    sub:'Savings ••••4521',   ico:'🏦',bg:'var(--blue-lt)',  linked:true, balance:112340,lastSync:'Jun 8, 2:14 PM'},
+  {id:'bpi',     nm:'BPI',           type:'Bank',    sub:'Savings ••••9988',   ico:'🏛️',bg:'var(--orange-lt)',linked:true, balance:38000, lastSync:'Jun 8, 1:00 PM'},
+  {id:'unionb',  nm:'UnionBank',     type:'Bank',    sub:'EON ••••3340',       ico:'💙',bg:'var(--blue-lt)',  linked:false,balance:0,     lastSync:'—'},
+  {id:'metrobank',nm:'Metrobank',    type:'Bank',    sub:'Savings ••••8812',   ico:'🏦',bg:'var(--red-lt)',  linked:false,balance:0,     lastSync:'—'},
+  {id:'security',nm:'Security Bank', type:'Bank',    sub:'Complete Chq ••••',  ico:'🏦',bg:'var(--teal-lt)', linked:false,balance:0,     lastSync:'—'},
+  {id:'landbank',nm:'Landbank',      type:'Bank',    sub:'Savings ••••0034',   ico:'🏦',bg:'var(--green-lt)',linked:false,balance:0,     lastSync:'—'},
+  {id:'gcash',   nm:'GCash',         type:'E-Wallet',sub:'e-Wallet ••••7890',  ico:'💚',bg:'#E8F9F0',        linked:true, balance:5820,  lastSync:'Jun 8, 3:45 PM'},
+  {id:'maya',    nm:'Maya',          type:'E-Wallet',sub:'e-Wallet ••••3312',  ico:'💜',bg:'var(--purple-lt)',linked:false,balance:0,     lastSync:'—'},
+  {id:'shopeepay',nm:'ShopeePay',   type:'E-Wallet',sub:'ShopeePay Wallet',   ico:'🧡',bg:'var(--orange-lt)',linked:false,balance:0,     lastSync:'—'},
+  {id:'grabpay', nm:'GrabPay',       type:'E-Wallet',sub:'GrabPay Wallet',     ico:'🟢',bg:'var(--green-lt)',linked:false,balance:0,     lastSync:'—'},
+  {id:'coins',   nm:'Coins.ph',      type:'E-Wallet',sub:'Crypto & Peso',      ico:'🪙',bg:'var(--yellow-lt)',linked:false,balance:0,     lastSync:'—'},
+  {id:'cash',    nm:'Cash',          type:'Cash',    sub:'On hand',            ico:'💵',bg:'var(--green-lt)',linked:true, balance:8450,  lastSync:'Manual'},
+  {id:'bdomc',   nm:'BDO Mastercard',type:'Credit',  sub:'Due Jul 15 ••••7654',ico:'💳',bg:'var(--red-lt)',  linked:true, balance:-12480,lastSync:'Jun 8, 2:14 PM'},
+];
+let LINKED_ACCOUNTS=JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+let ACCOUNTS_LIST=['Cash','BDO Savings','BPI Savings','GCash','Maya','BDO Mastercard'];
+
+/* ══════════════════════════════════════════════════════════
+   SEED SMS
+══════════════════════════════════════════════════════════ */
+let DEFAULT_SMS_MSGS=[
+  {id:1,sender:'BDO',    ico:'🏦',bg:'var(--blue-lt)',  time:'2:14 PM',
+   text:'[BDO] Your BDO Savings account ending 4521 was credited PHP 48,500.00 on 06/18/25. Available balance is PHP 112,340.00. Ref: SAL20250618.',
+   parsed:{amt:48500,type:'income',cat:'salary',nm:'BDO Salary Credit'},read:false,imported:false},
+  {id:2,sender:'GCash',  ico:'💚',bg:'#E8F9F0',         time:'3:45 PM',
+   text:'[GCash] PHP 3,000.00 was sent to you by Juan Santos. Your new GCash balance is PHP 5,820.00. Ref: GC20250625.',
+   parsed:{amt:3000,type:'income',cat:'transfer',nm:'GCash Transfer'},read:false,imported:false},
+  {id:3,sender:'Meralco',ico:'⚡',bg:'var(--yellow-lt)',time:'Jun 20',
+   text:'MERALCO: Your account 123-456-789 has a bill of PHP 2,100.00 due on June 25, 2025. Pay via GCash, Maya, or your bank.',
+   parsed:{amt:2100,type:'expense',cat:'bills',nm:'Meralco Electric'},read:true,imported:true},
+  {id:4,sender:'Netflix',ico:'📺',bg:'var(--purple-lt)',time:'Jun 19',
+   text:'Your Netflix membership renewed. PHP 549.00 was charged to your BDO Mastercard ending 7654. Next billing: Jul 19.',
+   parsed:{amt:549,type:'expense',cat:'sub',nm:'Netflix Subscription'},read:true,imported:true},
+  {id:5,sender:'BDO',    ico:'🏦',bg:'var(--blue-lt)',  time:'Jun 18',
+   text:'[BDO] Your BDO Mastercard ending 7654 was charged PHP 1,490.00 at LAZADA PH on 06/17/25. Available credit: PHP 13,510.00.',
+   parsed:{amt:1490,type:'expense',cat:'shopping',nm:'Lazada Purchase'},read:false,imported:false},
+  {id:6,sender:'PLDT',   ico:'📡',bg:'var(--teal-lt)',  time:'Jun 16',
+   text:'PLDT: Your account has an outstanding balance of PHP 1,899.00 due Jun 22. Avoid disconnection — pay now.',
+   parsed:{amt:1899,type:'expense',cat:'bills',nm:'PLDT Fiber Bill'},read:false,imported:false},
+  {id:7,sender:'Shopee', ico:'🧡',bg:'var(--orange-lt)',time:'Jun 15',
+   text:'[Shopee] Payment successful! PHP 870.00 paid for Order #PH-20250615. Estimated delivery: Jun 17-18.',
+   parsed:{amt:870,type:'expense',cat:'shopping',nm:'Shopee Order'},read:true,imported:false},
+  {id:8,sender:'GCash',  ico:'💚',bg:'#E8F9F0',         time:'Jun 11',
+   text:'[GCash] You sent PHP 2,100.00 to MERALCO BILL PAYMENT. Your new GCash balance is PHP 1,230.00. Ref: GCBP20250611.',
+   parsed:{amt:2100,type:'expense',cat:'bills',nm:'Meralco via GCash'},read:true,imported:true},
+];
+let SMS_MSGS=JSON.parse(JSON.stringify(DEFAULT_SMS_MSGS));
+let smsAutoImport=true,smsBankFilter=true;
+
+/* ══════════════════════════════════════════════════════════
+   SEED TRANSACTIONS WITH HARDCODED UUIDs (FEATURE 5)
+══════════════════════════════════════════════════════════ */
+let DEFAULT_TX=[
+  {id:'8a7b1c2d-0001-4000-8000-000000000001',t:'expense',cat:'dining',   nm:'Amber Restaurant',    acct:'BDO Mastercard',amt:1840,date:'Jun 30',note:'Anniversary dinner',updatedAt:1719748800000},
+  {id:'8a7b1c2d-0002-4000-8000-000000000002',t:'expense',cat:'transport',nm:'Grab Car',             acct:'GCash',         amt:180, date:'Jun 30',note:'To Makati',updatedAt:1719745200000},
+  {id:'8a7b1c2d-0003-4000-8000-000000000003',t:'expense',cat:'sub',      nm:'YouTube Premium',      acct:'BDO Mastercard',amt:179, date:'Jun 29',note:'Monthly',updatedAt:1719662400000},
+  {id:'8a7b1c2d-0004-4000-8000-000000000004',t:'expense',cat:'grocery',  nm:'S&R Membership',       acct:'BDO Mastercard',amt:2350,date:'Jun 29',note:'Monthly groceries',updatedAt:1719658800000},
+  {id:'8a7b1c2d-0005-4000-8000-000000000005',t:'income', cat:'freelance',nm:'Web Design Project',   acct:'BDO Savings',   amt:15000,date:'Jun 28',note:'Client: ABC Corp',updatedAt:1719576000000},
+  {id:'8a7b1c2d-0006-4000-8000-000000000006',t:'expense',cat:'personal', nm:'Bench',                acct:'BDO Mastercard',amt:1200,date:'Jun 28',note:'Clothes',updatedAt:1719572400000},
+  {id:'8a7b1c2d-0007-4000-8000-000000000007',t:'expense',cat:'health',   nm:"St. Luke's Clinic",   acct:'BDO Mastercard',amt:850, date:'Jun 27',note:'Check-up',updatedAt:1719489600000},
+  {id:'8a7b1c2d-0008-4000-8000-000000000008',t:'expense',cat:'leisure',  nm:'Netflix',              acct:'BDO Mastercard',amt:549, date:'Jun 26',note:'Monthly subscription',synced:true,updatedAt:1719403200000},
+  {id:'8a7b1c2d-0009-4000-8000-000000000009',t:'income', cat:'transfer', nm:'Transfer from Dad',    acct:'GCash',         amt:3000,date:'Jun 25',note:'Allowance',synced:true,updatedAt:1719316800000},
+  {id:'8a7b1c2d-0010-4000-8000-000000000010',t:'expense',cat:'bills',    nm:'Globe Postpaid',       acct:'BDO Savings',   amt:1299,date:'Jun 24',note:'Mobile plan',updatedAt:1719230400000},
+  {id:'8a7b1c2d-0011-4000-8000-000000000011',t:'expense',cat:'grocery',  nm:'Robinsons Supermarket',acct:'GCash',         amt:1650,date:'Jun 24',note:'Weekly groceries',updatedAt:1719226800000},
+  {id:'8a7b1c2d-0012-4000-8000-000000000012',t:'expense',cat:'edu',      nm:'Coursera',             acct:'BDO Mastercard',amt:750, date:'Jun 23',note:'Online course',updatedAt:1719144000000},
+  {id:'8a7b1c2d-0013-4000-8000-000000000013',t:'expense',cat:'bills',    nm:'PLDT Home Fiber',      acct:'BDO Savings',   amt:1899,date:'Jun 22',note:'Internet — June',synced:true,updatedAt:1719057600000},
+  {id:'8a7b1c2d-0014-4000-8000-000000000014',t:'expense',cat:'dining',   nm:'Samgyeopsal Place',    acct:'GCash',         amt:680, date:'Jun 22',note:'Dinner with friends',updatedAt:1719054000000},
+  {id:'8a7b1c2d-0015-4000-8000-000000000015',t:'income', cat:'invest',   nm:'GCash GInvest',        acct:'GCash',         amt:1200,date:'Jun 21',note:'Dividend payout',updatedAt:1718971200000},
+  {id:'8a7b1c2d-0016-4000-8000-000000000016',t:'expense',cat:'bills',    nm:'Meralco',              acct:'BDO Savings',   amt:2100,date:'Jun 20',note:'Electric — June',synced:true,updatedAt:1718884800000},
+  {id:'8a7b1c2d-0017-4000-8000-000000000017',t:'expense',cat:'grocery',  nm:'Puregold',             acct:'Cash',          amt:870, date:'Jun 19',note:'Pantry restock',updatedAt:1718798400000},
+  {id:'8a7b1c2d-0018-4000-8000-000000000018',t:'income', cat:'salary',   nm:'Salary — June',        acct:'BDO Savings',   amt:48500,date:'Jun 18',note:'Semi-monthly payroll',synced:true,updatedAt:1718712000000},
+  {id:'8a7b1c2d-0019-4000-8000-000000000019',t:'expense',cat:'shopping', nm:'Lazada',               acct:'BDO Mastercard',amt:1490,date:'Jun 17',note:'Phone accessories',synced:true,updatedAt:1718625600000},
+  {id:'8a7b1c2d-0020-4000-8000-000000000020',t:'expense',cat:'health',   nm:'Mercury Drug',         acct:'Cash',          amt:340, date:'Jun 17',note:'Vitamins',updatedAt:1718622000000},
+  {id:'8a7b1c2d-0021-4000-8000-000000000021',t:'income', cat:'freelance',nm:'Logo Design',          acct:'GCash',         amt:5000,date:'Jun 15',note:'Client: Maria Santos',updatedAt:1718452800000},
+  {id:'8a7b1c2d-0022-4000-8000-000000000022',t:'expense',cat:'grocery',  nm:'SM Hypermarket',       acct:'BDO Mastercard',amt:2870,date:'Jun 15',note:'Bi-weekly shopping',updatedAt:1718449200000},
+  {id:'8a7b1c2d-0023-4000-8000-000000000023',t:'expense',cat:'leisure',  nm:'Cinema — SM',          acct:'GCash',         amt:440, date:'Jun 13',note:'Movie night',updatedAt:1718276400000},
+  {id:'8a7b1c2d-0024-4000-8000-000000000024',t:'expense',cat:'bills',    nm:'Maynilad Water',       acct:'BDO Savings',   amt:680, date:'Jun 12',note:'Water bill',updatedAt:1718190000000},
+  {id:'8a7b1c2d-0025-4000-8000-000000000025',t:'income', cat:'gift',     nm:'Birthday Cash',        acct:'Cash',          amt:2000,date:'Jun 12',note:'From relatives',updatedAt:1718186400000},
+  {id:'8a7b1c2d-0026-4000-8000-000000000026',t:'expense',cat:'transport',nm:'Gas — Shell',          acct:'BDO Mastercard',amt:2100,date:'Jun 11',note:'Full tank',updatedAt:1718100000000},
+  {id:'8a7b1c2d-0027-4000-8000-000000000027',t:'expense',cat:'shopping', nm:'Shopee',               acct:'GCash',         amt:870, date:'Jun 10',note:'Home decor',synced:true,updatedAt:1718013600000},
+  {id:'8a7b1c2d-0028-4000-8000-000000000028',t:'income', cat:'salary',   nm:'Salary — June',        acct:'BDO Savings',   amt:48500,date:'Jun 9', note:'Semi-monthly payroll',synced:true,updatedAt:1717927200000},
+  {id:'8a7b1c2d-0029-4000-8000-000000000029',t:'expense',cat:'grocery',  nm:'Waltermart',           acct:'Cash',          amt:1120,date:'Jun 9', note:'Weekly groceries',updatedAt:1717923600000},
+  {id:'8a7b1c2d-0030-4000-8000-000000000030',t:'expense',cat:'dining',   nm:'Chowking',             acct:'Cash',          amt:145, date:'Jun 8', note:'Lunch',updatedAt:1717837200000},
+  {id:'8a7b1c2d-0031-4000-8000-000000000031',t:'expense',cat:'sub',      nm:'Adobe Creative Cloud', acct:'BDO Mastercard',amt:1200,date:'Jun 7', note:'Monthly',updatedAt:1717750800000},
+  {id:'8a7b1c2d-0032-4000-8000-000000000032',t:'expense',cat:'health',   nm:'Gym Membership',       acct:'BDO Mastercard',amt:800, date:'Jun 7', note:'Monthly fee',updatedAt:1717747200000},
+  {id:'8a7b1c2d-0033-4000-8000-000000000033',t:'expense',cat:'grocery',  nm:'Landers',              acct:'BDO Mastercard',amt:3200,date:'Jun 6', note:'Bulk groceries',updatedAt:1717664400000},
+  {id:'8a7b1c2d-0034-4000-8000-000000000034',t:'income', cat:'freelance',nm:'Social Media Mgmt',    acct:'GCash',         amt:8000,date:'Jun 5', note:'Monthly retainer',updatedAt:1717578000000},
+  {id:'8a7b1c2d-0035-4000-8000-000000000035',t:'expense',cat:'kids',     nm:'School Supplies',      acct:'Cash',          amt:650, date:'Jun 4', note:'New semester',updatedAt:1717491600000},
+  {id:'8a7b1c2d-0036-4000-8000-000000000036',t:'expense',cat:'shopping', nm:'Shopee',               acct:'GCash',         amt:870, date:'Jun 3', note:'Home items',updatedAt:1717405200000},
+  {id:'8a7b1c2d-0037-4000-8000-000000000037',t:'expense',cat:'transport',nm:'Gas — Petron',         acct:'Cash',          amt:1500,date:'Jun 3', note:'Fuel',updatedAt:1717401600000},
+  {id:'8a7b1c2d-0038-4000-8000-000000000038',t:'expense',cat:'health',   nm:'Dental Checkup',       acct:'BDO Mastercard',amt:1200,date:'Jun 2', note:'Cleaning',updatedAt:1717318800000},
+  {id:'8a7b1c2d-0039-4000-8000-000000000039',t:'income', cat:'invest',   nm:'Stock Dividends',      acct:'BDO Savings',   amt:3500,date:'Jun 1', note:'PSE portfolio',synced:true,updatedAt:1717232400000},
+  {id:'8a7b1c2d-0040-4000-8000-000000000040',t:'expense',cat:'bills',    nm:'HOA Dues',             acct:'Cash',          amt:1500,date:'Jun 1', note:'Monthly fee',updatedAt:1717228800000},
+  {id:'8a7b1c2d-0041-4000-8000-000000000041',t:'expense',cat:'misc',     nm:'Remittance — Province',acct:'BDO Savings',   amt:3000,date:'Jun 1', note:'Family support',updatedAt:1717225200000},
+];
+let ALL_TX=JSON.parse(JSON.stringify(DEFAULT_TX));
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL STATE
+══════════════════════════════════════════════════════════ */
+let currentUser=null; // Firebase user or {uid:'guest',displayName:'Guest User',email:'guest@local',isGuest:true}
+let isGuestMode=false;
+let curPeriod='daily',curMonthOffset=0,statMode='expense',modalType='expense';
+let selCat=null,kval='',acctIdx=0;
+let newCatType='expense',newCatEmoji='🏷️',newCatColor='#E8372A';
+let selectedPieCat=null;
+let memoDebounceTimer=null;
+let suggestedCat=null;
+let lastSyncTimestampText='Just now';
+let activeFirestoreUnsub=null;
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ══════════════════════════════════════════════════════════
+   THEME TOGGLE
+══════════════════════════════════════════════════════════ */
+let currentTheme=localStorage.getItem('mm_theme')||'light';
+function applyTheme(t){
+  currentTheme=t;
+  if(t==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+  }else{
+    document.documentElement.removeAttribute('data-theme');
+  }
+  try{localStorage.setItem('mm_theme',t);}catch(e){}
+  const ico=t==='dark'?'☀️':'🌙';
+  document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=ico);
+}
+function toggleTheme(){
+  applyTheme(currentTheme==='dark'?'light':'dark');
+  SyncEngine.queueChange('settings');
+}
+
+/* ══════════════════════════════════════════════════════════
+   HELPERS & TOAST
+══════════════════════════════════════════════════════════ */
+function fmt(n){return(+n||0).toLocaleString('en-PH',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function toast2(msg,ms=2200){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),ms);
+}
+function catInfo(id){
+  return[...ECATS,...ICATS].find(c=>c.id===id)||{ico:'📦',bg:'var(--gray-lt)',col:'#8C8C8C',nm:id||'?'};
+}
+function getDeviceDescriptor(){
+  const ua=navigator.userAgent||'';
+  let os='Device';
+  if(ua.includes('Android'))os='Android';
+  else if(ua.includes('iPhone')||ua.includes('iPad'))os='iOS';
+  else if(ua.includes('Macintosh'))os='macOS';
+  else if(ua.includes('Windows'))os='Windows';
+  else if(ua.includes('Linux'))os='Linux';
+
+  let browser='Browser';
+  if(ua.includes('Chrome'))browser='Chrome';
+  else if(ua.includes('Safari'))browser='Safari';
+  else if(ua.includes('Firefox'))browser='Firefox';
+  return `${os} — ${browser}`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FIREBASE SETUP & CHECKS
+══════════════════════════════════════════════════════════ */
+let firebaseApp=null,firebaseAuth=null,firestoreDb=null;
+function isFirebaseReady(){
+  return Boolean(
+    window.firebase &&
+    FIREBASE_CONFIG &&
+    FIREBASE_CONFIG.apiKey &&
+    FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY" &&
+    FIREBASE_CONFIG.projectId &&
+    FIREBASE_CONFIG.projectId !== "YOUR_PROJECT_ID"
+  );
+}
+
+function initFirebaseIfAvailable(){
+  if(!isFirebaseReady()){
+    console.warn("Money Manager: FIREBASE_CONFIG contains placeholder values. Running in offline/localStorage mode.");
+    return false;
+  }
+  try{
+    if(!firebase.apps.length){
+      firebaseApp=firebase.initializeApp(FIREBASE_CONFIG);
+    } else {
+      firebaseApp=firebase.app();
+    }
+    firebaseAuth=firebase.auth();
+    firestoreDb=firebase.firestore();
+    return true;
+  }catch(err){
+    console.warn("Firebase initialization failed:",err);
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LOCAL STORAGE PERSISTENCE (NAMESPACED BY UID)
+══════════════════════════════════════════════════════════ */
+function getStorageKey(sub){
+  const uid=currentUser?(currentUser.isGuest?'guest':currentUser.uid):'guest';
+  return `mm_${uid}_${sub}`;
+}
+
+function saveLocalState(){
+  try{
+    localStorage.setItem(getStorageKey('transactions'),JSON.stringify(ALL_TX));
+    localStorage.setItem(getStorageKey('categories'),JSON.stringify({expense:ECATS,income:ICATS}));
+    localStorage.setItem(getStorageKey('accounts'),JSON.stringify(LINKED_ACCOUNTS));
+    localStorage.setItem(getStorageKey('goals'),JSON.stringify(SAVINGS_GOALS));
+    localStorage.setItem(getStorageKey('recurring'),JSON.stringify(RECURRING_TX));
+    localStorage.setItem(getStorageKey('sms'),JSON.stringify(SMS_MSGS));
+    localStorage.setItem(getStorageKey('settings'),JSON.stringify({theme:currentTheme,updatedAt:Date.now()}));
+  }catch(e){
+    console.warn("Failed saving local state:",e);
+  }
+}
+
+function loadLocalState(){
+  try{
+    const tx=localStorage.getItem(getStorageKey('transactions'));
+    if(tx)ALL_TX=JSON.parse(tx);
+    const cat=localStorage.getItem(getStorageKey('categories'));
+    if(cat){const c=JSON.parse(cat);if(c.expense)ECATS=c.expense;if(c.income)ICATS=c.income;}
+    const acc=localStorage.getItem(getStorageKey('accounts'));
+    if(acc)LINKED_ACCOUNTS=JSON.parse(acc);
+    const gl=localStorage.getItem(getStorageKey('goals'));
+    if(gl)SAVINGS_GOALS=JSON.parse(gl);
+    const rc=localStorage.getItem(getStorageKey('recurring'));
+    if(rc)RECURRING_TX=JSON.parse(rc);
+    const sm=localStorage.getItem(getStorageKey('sms'));
+    if(sm)SMS_MSGS=JSON.parse(sm);
+  }catch(e){
+    console.warn("Failed loading local state:",e);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   FEATURE 3 & 5: REAL-TIME SYNC ENGINE & CONFLICT RESOLUTION
+══════════════════════════════════════════════════════════ */
+const SyncEngine = {
+  syncTimeout:null,
+  status:'synced', // 'synced'|'syncing'|'offline'|'error'
+
+  updateIndicator(st,label){
+    this.status=st;
+    const dots=document.querySelectorAll('.sync-pill-dot');
+    const texts=document.querySelectorAll('#sync-text-trans');
+    dots.forEach(d=>{
+      d.className='sync-pill-dot '+st;
+    });
+    texts.forEach(t=>{
+      t.textContent=label||(st==='synced'?'Synced':st==='syncing'?'Syncing…':st==='offline'?'Offline':'Sync Error');
+    });
+
+    const pill=document.getElementById('sync-pill-trans');
+    if(pill){
+      if(st==='synced'){
+        setTimeout(()=>{if(this.status==='synced')pill.classList.add('faded');},3000);
+      }else{
+        pill.classList.remove('faded');
+      }
+    }
+  },
+
+  mergeItems(localArr,remoteArr){
+    const map=new Map();
+    // Insert local items first
+    (localArr||[]).forEach(item=>{
+      if(item&&item.id)map.set(item.id,item);
+    });
+    // Merge or update with remote items if remote has higher updatedAt
+    (remoteArr||[]).forEach(rem=>{
+      if(!rem||!rem.id)return;
+      if(!map.has(rem.id)){
+        map.set(rem.id,rem);
+      } else {
+        const loc=map.get(rem.id);
+        const locUp=loc.updatedAt||0;
+        const remUp=rem.updatedAt||0;
+        if(remUp>=locUp){
+          map.set(rem.id,rem);
+        }
+      }
+    });
+    return Array.from(map.values());
+  },
+
+  queueChange(subType){
+    saveLocalState();
+    if(!navigator.onLine||!currentUser||currentUser.isGuest||!isFirebaseReady()){
+      this.addToPendingSync(subType);
+      return;
+    }
+    this.updateIndicator('syncing','Syncing…');
+    clearTimeout(this.syncTimeout);
+    this.syncTimeout=setTimeout(()=>{
+      this.pushToFirestore(subType);
+    },500);
+  },
+
+  addToPendingSync(subType){
+    try{
+      const key=getStorageKey('pending_sync');
+      const q=JSON.parse(localStorage.getItem(key)||'[]');
+      if(!q.includes(subType))q.push(subType);
+      localStorage.setItem(key,JSON.stringify(q));
+      if(!navigator.onLine){
+        this.updateIndicator('offline','Offline');
+      }
+    }catch(e){}
+  },
+
+  async flushPendingQueue(){
+    if(!navigator.onLine||!currentUser||currentUser.isGuest||!isFirebaseReady())return;
+    try{
+      const key=getStorageKey('pending_sync');
+      const q=JSON.parse(localStorage.getItem(key)||'[]');
+      if(q.length>0){
+        this.updateIndicator('syncing','Syncing…');
+        for(const sub of q){
+          await this.pushToFirestore(sub,true);
+        }
+        localStorage.removeItem(key);
+      }
+      this.updateIndicator('synced','Synced');
+    }catch(e){
+      this.updateIndicator('error','Sync Error');
+    }
+  },
+
+  async pushToFirestore(subType='all',silent=false){
+    if(!currentUser||currentUser.isGuest||!isFirebaseReady()||!firestoreDb)return;
+    try{
+      if(!silent)this.updateIndicator('syncing','Syncing…');
+      const uid=currentUser.uid;
+      const baseRef=firestoreDb.collection('users').doc(uid);
+
+      if(subType==='all'||subType==='transactions'){
+        await baseRef.collection('data').doc('transactions').set({
+          items:ALL_TX,
+          lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='categories'){
+        await baseRef.collection('data').doc('categories').set({
+          expense:ECATS,income:ICATS,lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='accounts'){
+        await baseRef.collection('data').doc('accounts').set({
+          items:LINKED_ACCOUNTS,lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='goals'){
+        await baseRef.collection('data').doc('goals').set({
+          items:SAVINGS_GOALS,lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='recurring'){
+        await baseRef.collection('data').doc('recurring').set({
+          items:RECURRING_TX,lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='sms'){
+        await baseRef.collection('data').doc('sms_inbox').set({
+          items:SMS_MSGS,lastModified:Date.now()
+        },{merge:true});
+      }
+      if(subType==='all'||subType==='settings'){
+        await baseRef.collection('data').doc('settings').set({
+          darkMode:currentTheme==='dark',
+          currency:'PHP',
+          lastModified:Date.now()
+        },{merge:true});
+      }
+
+      lastSyncTimestampText=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const dt=document.getElementById('profile-last-sync');
+      if(dt)dt.textContent=lastSyncTimestampText;
+      this.updateIndicator('synced','Synced');
+    }catch(err){
+      console.warn("Firestore push failed:",err);
+      this.updateIndicator('error','Sync Error');
+      this.addToPendingSync(subType);
+    }
+  },
+
+  attachListeners(uid){
+    if(!isFirebaseReady()||!firestoreDb)return;
+    if(activeFirestoreUnsub){activeFirestoreUnsub();activeFirestoreUnsub=null;}
+
+    const userDoc=firestoreDb.collection('users').doc(uid);
+
+    // Watch forceSignOut flag (Feature 4)
+    userDoc.collection('profile').doc('info').onSnapshot(doc=>{
+      if(doc&&doc.exists){
+        const dat=doc.data();
+        if(dat.forceSignOut){
+          toast2('This account was signed out remotely.');
+          handleSignOut(false);
+        }
+      }
+    },err=>{});
+
+    // Real-time transactions listener (Feature 3)
+    const unsubTx=userDoc.collection('data').doc('transactions').onSnapshot(doc=>{
+      if(doc&&doc.exists){
+        const dat=doc.data();
+        if(dat&&Array.isArray(dat.items)){
+          ALL_TX=this.mergeItems(ALL_TX,dat.items);
+          saveLocalState();
+          renderTrans();
+          renderStats();
+          this.updateIndicator('synced','Synced');
+        }
+      }
+    },err=>{
+      console.warn("Transactions onSnapshot error:",err);
+      this.updateIndicator('error','Sync Error');
+    });
+
+    activeFirestoreUnsub=()=>{
+      unsubTx();
+    };
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   ONLINE / OFFLINE DETECTOR (FEATURE 5)
+══════════════════════════════════════════════════════════ */
+function updateNetworkStatus(){
+  const isOnline=navigator.onLine;
+  const offB=document.getElementById('banner-offline');
+  const onB=document.getElementById('banner-online');
+
+  if(!isOnline){
+    if(offB)offB.style.display='flex';
+    if(onB)onB.style.display='none';
+    SyncEngine.updateIndicator('offline','Offline');
+  }else{
+    if(offB)offB.style.display='none';
+    if(onB){
+      onB.style.display='flex';
+      setTimeout(()=>{if(onB)onB.style.display='none';},3000);
+    }
+    SyncEngine.flushPendingQueue();
+  }
+}
+window.addEventListener('online',updateNetworkStatus);
+window.addEventListener('offline',updateNetworkStatus);
+
+function triggerManualSync(){
+  if(!navigator.onLine){
+    toast2('Device is currently offline');
+    return;
+  }
+  toast2('Syncing with cloud database…');
+  SyncEngine.pushToFirestore('all');
+}
+
+/* ══════════════════════════════════════════════════════════
+   FEATURE 1: AUTHENTICATION FLOWS
+══════════════════════════════════════════════════════════ */
+function showAuthScreen(view='signin'){
+  switchAuthView(view);
+  const closeBtn=document.getElementById('auth-close-btn');
+  if(closeBtn)closeBtn.style.display=(currentUser&&isGuestMode)?'flex':'none';
+  document.getElementById('auth-modal').classList.add('on');
+}
+
+function hideAuthScreen(){
+  document.getElementById('auth-modal').classList.remove('on');
+}
+
+function switchAuthView(v){
+  const si=document.getElementById('auth-signin-view');
+  const su=document.getElementById('auth-signup-view');
+  clearAuthErrors();
+  if(v==='signup'){
+    si.style.display='none';su.style.display='block';
+  }else{
+    si.style.display='block';su.style.display='none';
+  }
+}
+
+function togglePwVisibility(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.type=el.type==='password'?'text':'password';
+}
+
+function clearAuthErrors(){
+  document.querySelectorAll('.auth-error-msg').forEach(e=>{e.style.display='none';e.textContent='';});
+}
+
+function showAuthError(id,msg){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=msg;
+  el.style.display='block';
+}
+
+function checkPasswordStrength(pw){
+  const fill=document.getElementById('pw-fill');
+  const lbl=document.getElementById('pw-lbl');
+  if(!pw){
+    fill.style.width='0%';lbl.textContent='Strength: enter password';return;
+  }
+  let score=0;
+  if(pw.length>=8)score++;
+  if(/[A-Z]/.test(pw))score++;
+  if(/[0-9]/.test(pw))score++;
+  if(/[^A-Za-z0-9]/.test(pw))score++;
+
+  if(score<=1){
+    fill.style.width='33%';fill.style.background='#E74C3C';lbl.textContent='Strength: Weak (min 8 chars)';
+  } else if(score<=3){
+    fill.style.width='66%';fill.style.background='#F39C12';lbl.textContent='Strength: Fair';
+  } else {
+    fill.style.width='100%';fill.style.background='#2ECC71';lbl.textContent='Strength: Strong';
+  }
+}
+
+function showAuthSpinner(msg='Connecting…'){
+  const o=document.getElementById('auth-spinner-overlay');
+  const l=document.getElementById('auth-spinner-lbl');
+  if(l)l.textContent=msg;
+  if(o)o.style.display='flex';
+}
+function hideAuthSpinner(){
+  const o=document.getElementById('auth-spinner-overlay');
+  if(o)o.style.display='none';
+}
+
+async function handleEmailSignIn(){
+  clearAuthErrors();
+  const email=document.getElementById('signin-email').value.trim();
+  const pw=document.getElementById('signin-pw').value;
+
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){
+    showAuthError('err-signin-email','Please enter a valid email address.');return;
+  }
+  if(!pw){
+    showAuthError('err-signin-pw','Please enter your password.');return;
+  }
+
+  if(!isFirebaseReady()){
+    // Offline simulation if Firebase config placeholder
+    toast2('⚠ Firebase not configured. Continuing in guest mode.');
+    continueAsGuest();
+    return;
+  }
+
+  showAuthSpinner('Signing in…');
+  try{
+    const res=await firebaseAuth.signInWithEmailAndPassword(email,pw);
+    onUserAuthenticated(res.user);
+  }catch(err){
+    hideAuthSpinner();
+    if(err.code==='auth/user-not-found'||err.code==='auth/wrong-password'||err.code==='auth/invalid-credential'){
+      showAuthError('err-signin-pw','Invalid email or password.');
+    } else if(err.code==='auth/invalid-email'){
+      showAuthError('err-signin-email','Invalid email format.');
+    } else {
+      showAuthError('err-signin-pw',err.message||'Authentication failed.');
+    }
+  }
+}
+
+async function handleEmailSignUp(){
+  clearAuthErrors();
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-pw').value;
+  const pw2=document.getElementById('signup-pw2').value;
+
+  if(!name){showAuthError('err-signup-name','Please enter your full name.');return;}
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){showAuthError('err-signup-email','Please enter a valid email address.');return;}
+  if(pw.length<8){showAuthError('err-signup-pw','Password must be at least 8 characters.');return;}
+  if(pw!==pw2){showAuthError('err-signup-pw2','Passwords do not match.');return;}
+
+  if(!isFirebaseReady()){
+    toast2('⚠ Firebase not configured. Continuing in guest mode.');
+    continueAsGuest();
+    return;
+  }
+
+  showAuthSpinner('Creating account…');
+  try{
+    const res=await firebaseAuth.createUserWithEmailAndPassword(email,pw);
+    if(res.user&&name){
+      await res.user.updateProfile({displayName:name});
+    }
+    // Initialize profile & seed in Firestore
+    await seedNewUserFirestore(res.user,name);
+    onUserAuthenticated(res.user);
+  }catch(err){
+    hideAuthSpinner();
+    if(err.code==='auth/email-already-in-use'){
+      showAuthError('err-signup-email','This email is already in use.');
+    } else if(err.code==='auth/weak-password'){
+      showAuthError('err-signup-pw','Password is too weak.');
+    } else {
+      showAuthError('err-signup-pw',err.message||'Account creation failed.');
+    }
+  }
+}
+
+async function handleGoogleSignIn(){
+  if(!isFirebaseReady()){
+    toast2('⚠ Firebase not configured. Continuing in guest mode.');
+    continueAsGuest();
+    return;
+  }
+  showAuthSpinner('Signing in with Google…');
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    const res=await firebaseAuth.signInWithPopup(provider);
+    await seedNewUserFirestore(res.user,res.user.displayName||'Google User');
+    onUserAuthenticated(res.user);
+  }catch(err){
+    hideAuthSpinner();
+    console.warn("Google sign-in error:",err);
+    toast2('Google Sign-In cancelled or failed');
+  }
+}
+
+async function seedNewUserFirestore(user,dispName){
+  if(!firestoreDb)return;
+  try{
+    const userDoc=firestoreDb.collection('users').doc(user.uid);
+    const snap=await userDoc.collection('profile').doc('info').get();
+    if(!snap.exists){
+      // First-time setup: write profile & initial default records
+      await userDoc.collection('profile').doc('info').set({
+        displayName:dispName||user.displayName||'User',
+        email:user.email||'',
+        currency:'PHP',
+        createdAt:new Date().toISOString(),
+        lastSeen:new Date().toISOString(),
+        deviceCount:1,
+        devices:[{name:getDeviceDescriptor(),lastActive:new Date().toISOString()}]
+      });
+
+      // Check if user had guest transactions in localStorage
+      const guestTx=localStorage.getItem('mm_guest_transactions');
+      const seedTx=guestTx?JSON.parse(guestTx):ALL_TX;
+
+      await userDoc.collection('data').doc('transactions').set({items:seedTx,lastModified:Date.now()});
+      await userDoc.collection('data').doc('categories').set({expense:ECATS,income:ICATS,lastModified:Date.now()});
+      await userDoc.collection('data').doc('accounts').set({items:LINKED_ACCOUNTS,lastModified:Date.now()});
+      await userDoc.collection('data').doc('goals').set({items:SAVINGS_GOALS,lastModified:Date.now()});
+      await userDoc.collection('data').doc('recurring').set({items:RECURRING_TX,lastModified:Date.now()});
+      await userDoc.collection('data').doc('sms_inbox').set({items:SMS_MSGS,lastModified:Date.now()});
+      await userDoc.collection('data').doc('settings').set({darkMode:currentTheme==='dark',currency:'PHP',lastModified:Date.now()});
+
+      // Clear guest flag & data
+      localStorage.removeItem('mm_is_guest');
+    } else {
+      // Existing user: record current device
+      await userDoc.collection('profile').doc('info').update({
+        lastSeen:new Date().toISOString(),
+        forceSignOut:false
+      });
+    }
+  }catch(e){
+    console.warn("Seeding user doc error:",e);
+  }
+}
+
+function continueAsGuest(){
+  isGuestMode=true;
+  currentUser={uid:'guest',displayName:'Guest User',email:'Offline Mode',isGuest:true};
+  localStorage.setItem('mm_is_guest','true');
+  loadLocalState();
+  hideAuthSpinner();
+  hideAuthScreen();
+  document.getElementById('banner-guest').style.display='flex';
+  renderAllViews();
+  toast2('Continuing in Guest Mode (Offline)');
+}
+
+function onUserAuthenticated(user){
+  hideAuthSpinner();
+  currentUser=user;
+  isGuestMode=false;
+  localStorage.removeItem('mm_is_guest');
+  document.getElementById('banner-guest').style.display='none';
+  hideAuthScreen();
+
+  // Load from local storage for instant UI
+  loadLocalState();
+  renderAllViews();
+
+  // Attach Firestore snapshot listeners for real-time sync
+  SyncEngine.attachListeners(user.uid);
+  SyncEngine.pushToFirestore('all',true);
+  toast2(`✔ Welcome, ${user.displayName||'User'}!`);
+}
+
+async function handleSignOut(promptConfirm=true){
+  if(promptConfirm&&!confirm("Are you sure you want to sign out?")){
+    return;
+  }
+  showAuthSpinner('Signing out…');
+  try{
+    if(activeFirestoreUnsub){activeFirestoreUnsub();activeFirestoreUnsub=null;}
+    if(firebaseAuth&&firebaseAuth.currentUser){
+      await firebaseAuth.signOut();
+    }
+  }catch(e){}
+  currentUser=null;
+  isGuestMode=false;
+  localStorage.removeItem('mm_is_guest');
+  hideAuthSpinner();
+  showAuthScreen('signin');
+  toast2('Signed out');
+}
+
+async function handleSignOutAllDevices(){
+  if(!confirm("Sign out of ALL connected devices? You will also need to sign in again here."))return;
+  if(firestoreDb&&currentUser&&!currentUser.isGuest){
+    try{
+      await firestoreDb.collection('users').doc(currentUser.uid).collection('profile').doc('info').update({
+        forceSignOut:true
+      });
+    }catch(e){}
+  }
+  handleSignOut(false);
+}
+
+/* ══════════════════════════════════════════════════════════
+   NAVIGATION & TAB SELECTION
+══════════════════════════════════════════════════════════ */
+function goPage(pgId,navId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById(pgId).classList.add('on');
+  if(navId)document.getElementById(navId).classList.add('on');
+  const fabTrans=document.getElementById('fab-trans');
+  const fabGoals=document.getElementById('fab-goals');
+  if(fabTrans)fabTrans.style.display=(pgId==='pg-trans')?'flex':'none';
+  if(fabGoals)fabGoals.style.display=(pgId==='pg-goals')?'flex':'none';
+
+  if(pgId==='pg-goals')renderGoals();
+  if(pgId==='pg-more')renderRecurringList();
+  if(pgId==='pg-profile')renderProfile();
+}
+
+function renderAllViews(){
+  renderTrans();
+  renderStats();
+  renderAccounts();
+  renderGoals();
+  renderRecurringList();
+  renderProfile();
+}
+
+/* ══════════════════════════════════════════════════════════
+   TRANS PAGE
+══════════════════════════════════════════════════════════ */
+function getMonthLabel(off){
+  const b=new Date(2025,5,1);b.setMonth(b.getMonth()+off);
+  return MONTHS[b.getMonth()]+' '+b.getFullYear();
+}
+function cyclePrev(){curMonthOffset--;updateLabel();renderTrans();}
+function cycleNext(){if(curMonthOffset<0){curMonthOffset++;updateLabel();renderTrans();}}
+function updateLabel(){
+  const m={daily:getMonthLabel(curMonthOffset),cal:getMonthLabel(curMonthOffset),weekly:'Week of Jun 8',monthly:'2025',total:'All Time'};
+  document.getElementById('hdr-lbl').textContent=m[curPeriod]||getMonthLabel(curMonthOffset);
+}
+function setPeriod(p){
+  curPeriod=p;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pt-'+p).classList.add('on');
+  updateLabel();renderTrans();
+}
+function renderTrans(){
+  // Filter out soft deleted items (Feature 5)
+  const activeTxs=ALL_TX.filter(t=>!t.deleted);
+  const txs=curMonthOffset!==0?[]:activeTxs;
+  let tI=0,tE=0;txs.forEach(t=>{if(t.t==='income')tI+=t.amt;else tE+=t.amt;});
+  const net=tI-tE;
+  document.getElementById('s-inc').textContent='₱'+fmt(tI);
+  document.getElementById('s-exp').textContent='₱'+fmt(tE);
+  const sv=document.getElementById('s-total');
+  sv.textContent=(net<0?'-':'')+'₱'+fmt(Math.abs(net));
+  sv.style.color=net<0?'#FFB0AB':'#fff';
+  if(curPeriod==='cal'){renderCal(txs);return;}
+  if(curPeriod==='weekly'){renderWeekly(txs);return;}
+  if(curPeriod==='monthly'){renderMonthly();return;}
+  if(curPeriod==='total'){renderTotal();return;}
+  renderDaily(txs);
+}
+function renderDaily(txs){
+  const g={};txs.forEach(t=>{if(!g[t.date])g[t.date]=[];g[t.date].push(t);});
+  let h='';
+  Object.keys(g).forEach(date=>{
+    const gr=g[date];let dI=0,dE=0;gr.forEach(t=>{if(t.t==='income')dI+=t.amt;else dE+=t.amt;});
+    h+=`<div class="dg"><div class="dg-hd"><div class="dg-lbl">${date}, 2025</div>
+      <div class="dg-right">${dI?`<div class="dg-inc">+₱${fmt(dI)}</div>`:''}${dE?`<div class="dg-exp">-₱${fmt(dE)}</div>`:''}</div></div>
+      <div class="txcard">`;
+    gr.forEach(t=>{
+      const ci=catInfo(t.cat);const isI=t.t==='income';
+      const sc=t.synced?`<span class="sync-chip">⚡</span>`:'';
+      h+=`<div class="tx" onclick="promptDeleteTx('${t.id}')"><div class="tx-ico" style="background:${ci.bg}">${ci.ico}</div>
+        <div class="tx-mid"><div class="tx-cat">${t.nm}${sc}</div>
+        <div class="tx-acct">${t.acct}</div>${t.note?`<div class="tx-note">${t.note}</div>`:''}</div>
+        <div class="tx-amt ${isI?'inc':'exp'}">${isI?'+ ':'- '}₱${fmt(t.amt)}</div></div>`;
+    });
+    h+='</div></div>';
+  });
+  document.getElementById('trans-body').innerHTML=h+'<div class="spacer"></div>';
+}
+function promptDeleteTx(id){
+  const t=ALL_TX.find(x=>x.id===id);
+  if(!t)return;
+  if(confirm(`Delete transaction "${t.nm}" (₱${fmt(t.amt)})?`)){
+    t.deleted=true;
+    t.updatedAt=Date.now();
+    SyncEngine.queueChange('transactions');
+    renderTrans();
+    renderStats();
+    toast2('Transaction deleted');
+  }
+}
+function renderCal(txs){
+  const bd={};txs.forEach(t=>{const d=parseInt(t.date.split(' ')[1]);if(!bd[d])bd[d]={i:0,e:0};if(t.t==='income')bd[d].i+=t.amt;else bd[d].e+=t.amt;});
+  const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let h=`<div class="txcard"><div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line)">${dn.map(d=>`<div style="font-size:10px;font-weight:700;color:var(--ink4);text-align:center;padding:8px 0;text-transform:uppercase">${d}</div>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr)">`;
+  for(let i=0;i<30;i++){
+    const d=i+1,td=bd[d]||{i:0,e:0},today=d===8;
+    h+=`<div style="min-height:48px;padding:4px 3px 3px;border-right:${i%7===6?'none':'1px solid var(--line)'};border-bottom:${i>=21?'none':'1px solid var(--line)'};cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="${today?'background:var(--red);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;':''}font-size:12px;font-weight:500;color:${today?'':'var(--ink2)'};line-height:1;padding:2px">${d}</div>
+      ${td.e?`<div style="font-size:9px;font-weight:600;color:var(--red);line-height:1.2">-${fmt(td.e)}</div>`:''}
+      ${td.i?`<div style="font-size:9px;font-weight:600;color:var(--blue);line-height:1.2">+${fmt(td.i)}</div>`:''}
+    </div>`;
+  }
+  h+='</div></div><div class="spacer"></div>';
+  document.getElementById('trans-body').innerHTML=h;
+}
+function renderWeekly(txs){
+  const wD=['Jun 2','Jun 3','Jun 4','Jun 5','Jun 6','Jun 7','Jun 8'];
+  const tot={};wD.forEach(d=>tot[d]=0);
+  txs.forEach(t=>{if(wD.includes(t.date)&&t.t==='expense')tot[t.date]+=t.amt;});
+  const mx=Math.max(...Object.values(tot),1);
+  let h=`<div class="week-bar-wrap" style="background:var(--card);padding:14px;margin-bottom:2px"><div style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:12px">Spending — Week of Jun 2–8</div><div style="display:flex;align-items:flex-end;height:100px;gap:6px">`;
+  wD.forEach(d=>{const a=tot[d]||0;const ht=Math.max(6,Math.round(a/mx*80));
+    h+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:9px;color:var(--ink4)">₱${fmt(a)}</div><div style="width:100%;height:80px;display:flex;align-items:flex-end"><div style="width:100%;height:${ht}px;background:var(--red);border-radius:4px"></div></div><div style="font-size:10px;color:var(--ink3);font-weight:600">${d.split(' ')[1]}</div></div>`;
+  });
+  h+='</div></div>';
+  const wt=txs.filter(t=>wD.includes(t.date));
+  const wg={};wt.forEach(t=>{if(!wg[t.date])wg[t.date]=[];wg[t.date].push(t);});
+  wD.slice().reverse().forEach(date=>{
+    if(!wg[date])return;const gr=wg[date];let dI=0,dE=0;gr.forEach(t=>{if(t.t==='income')dI+=t.amt;else dE+=t.amt;});
+    h+=`<div class="dg"><div class="dg-hd"><div class="dg-lbl">${date}</div><div class="dg-right">${dI?`<div class="dg-inc">+₱${fmt(dI)}</div>`:''}${dE?`<div class="dg-exp">-₱${fmt(dE)}</div>`:''}</div></div><div class="txcard">`;
+    gr.forEach(t=>{const ci=catInfo(t.cat);const isI=t.t==='income';
+      h+=`<div class="tx"><div class="tx-ico" style="background:${ci.bg}">${ci.ico}</div>
+        <div class="tx-mid"><div class="tx-cat">${t.nm}</div><div class="tx-acct">${t.acct}</div>${t.note?`<div class="tx-note">${t.note}</div>`:''}</div>
+        <div class="tx-amt ${isI?'inc':'exp'}">${isI?'+ ':'- '}₱${fmt(t.amt)}</div></div>`;
+    });h+='</div></div>';
+  });
+  document.getElementById('trans-body').innerHTML=h+'<div class="spacer"></div>';
+}
+function renderMonthly(){
+  const data=[
+    {nm:'January 2025',inc:95000,exp:41200},{nm:'February 2025',inc:97500,exp:38900},
+    {nm:'March 2025',inc:97000,exp:44700},{nm:'April 2025',inc:97000,exp:39600},
+    {nm:'May 2025',inc:100500,exp:42300},{nm:'June 2025',inc:134700,exp:55427},
+  ];
+  let h='';
+  data.slice().reverse().forEach(m=>{
+    const net=m.inc-m.exp;
+    h+=`<div class="txcard" style="margin-bottom:1px"><div class="tx" style="cursor:default">
+      <div class="tx-ico" style="background:var(--blue-lt)">📅</div>
+      <div class="tx-mid"><div class="tx-cat">${m.nm}</div>
+        <div class="tx-acct" style="display:flex;gap:10px;margin-top:3px"><span style="color:var(--blue)">+₱${fmt(m.inc)}</span><span style="color:var(--red)">-₱${fmt(m.exp)}</span></div>
+      </div>
+      <div class="tx-amt" style="color:${net>=0?'var(--green)':'var(--red)'}">₱${fmt(Math.abs(net))}</div>
+    </div></div>`;
+  });
+  document.getElementById('trans-body').innerHTML=h+'<div class="spacer"></div>';
+}
+function renderTotal(){
+  const ct={};ALL_TX.filter(t=>!t.deleted&&t.t==='expense').forEach(t=>{ct[t.cat]=(ct[t.cat]||0)+t.amt;});
+  const sorted=Object.entries(ct).sort((a,b)=>b[1]-a[1]);
+  let h='<div class="txcard" style="margin-bottom:2px"><div style="padding:12px 14px"><div style="font-size:12px;font-weight:500;color:var(--ink3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px">All-time by category</div>';
+  sorted.forEach(([id,amt])=>{const ci=catInfo(id);
+    h+=`<div class="tx" style="padding:9px 0;border-bottom:1px solid var(--line)">
+      <div class="tx-ico" style="width:32px;height:32px;background:${ci.bg};font-size:14px">${ci.ico}</div>
+      <div class="tx-mid"><div class="tx-cat" style="font-size:12px">${ci.nm}</div></div>
+      <div class="tx-amt exp" style="font-size:13px">₱${fmt(amt)}</div></div>`;
+  });
+  h+='</div></div><div class="spacer"></div>';
+  document.getElementById('trans-body').innerHTML=h;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATS & INTERACTIVE PIE CHART
+══════════════════════════════════════════════════════════ */
+function setStat(m,el){
+  statMode=m;selectedPieCat=null;
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');renderStats();
+}
+function togglePieSlice(catId){
+  if(selectedPieCat===catId){selectedPieCat=null;}
+  else{selectedPieCat=catId;}
+  renderStats();
+}
+function clearPieFilter(){
+  selectedPieCat=null;renderStats();
+}
+function buildPie(cats,total,colors,centerText){
+  const cx=60,cy=60,r=50,gap=1.5;let s=-90,paths='';
+  cats.forEach(([id,amt],i)=>{
+    const pct=amt/total,angle=pct*360,rad=a=>a*Math.PI/180;
+    const x1=cx+r*Math.cos(rad(s)),y1=cy+r*Math.sin(rad(s));
+    const end=s+angle-gap;const x2=cx+r*Math.cos(rad(end)),y2=cy+r*Math.sin(rad(end));
+    const isSel=selectedPieCat===id;
+    const isOther=selectedPieCat!==null&&!isSel;
+    const op=isSel?'1.0':isOther?'0.3':'.9';
+    const tr=isSel?'transform:scale(1.08);':'transform:scale(1);';
+    paths+=`<path class="pie-slice" onclick="event.stopPropagation();togglePieSlice('${id}')" d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${angle>180?1:0},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${colors[i%colors.length]}" opacity="${op}" style="${tr}"/>`;
+    s+=angle;
+  });
+  paths+=`<circle cx="${cx}" cy="${cy}" r="28" fill="var(--card)" onclick="clearPieFilter()" style="cursor:pointer"/>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Roboto" font-size="8.5" fill="var(--ink4)" onclick="clearPieFilter()" style="cursor:pointer">Total</text>
+    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-family="Roboto" font-size="10" font-weight="700" fill="var(--ink)" onclick="clearPieFilter()" style="cursor:pointer">${centerText}</text>`;
+  const svg=`<svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0" onclick="clearPieFilter()">${paths}</svg>`;
+  let leg='';
+  cats.forEach(([id,amt],i)=>{
+    const ci=catInfo(id);const pct=Math.round(amt/total*100);
+    const isSel=selectedPieCat===id;
+    leg+=`<div class="pl-item${isSel?' selected':''}" onclick="togglePieSlice('${id}')">
+      <div class="pl-dot" style="background:${colors[i%colors.length]}"></div>
+      <div class="pl-nm">${ci.nm}</div>
+      <div class="pl-pct">${pct}%</div>
+      <div class="pl-amt">₱${fmt(amt)}</div>
+    </div>`;
+  });
+  return{svg,leg};
+}
+function renderStats(){
+  const activeTxs=ALL_TX.filter(t=>!t.deleted);
+  const tI=activeTxs.filter(t=>t.t==='income').reduce((s,t)=>s+t.amt,0);
+  const tE=activeTxs.filter(t=>t.t==='expense').reduce((s,t)=>s+t.amt,0);
+  let h=`<div class="stats-sum">
+    <div class="ss"><div class="ss-lbl">Income</div><div class="ss-val inc">₱${fmt(tI)}</div></div>
+    <div class="ss"><div class="ss-lbl">Expense</div><div class="ss-val exp">₱${fmt(tE)}</div></div>
+    <div class="ss"><div class="ss-lbl">Net</div><div class="ss-val net">₱${fmt(tI-tE)}</div></div>
+  </div>`;
+  const BUDGETS={food:5000,transport:4000,grocery:6000,dining:3000,shopping:2500,bills:8000,sub:2000,health:2000,leisure:2000,personal:2000,misc:1500};
+
+  if(statMode==='expense'){
+    const m={};activeTxs.filter(t=>t.t==='expense').forEach(t=>{m[t.cat]=(m[t.cat]||0)+t.amt;});
+    const cats=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const tot=cats.reduce((s,[,v])=>s+v,0)||1;
+    const p=buildPie(cats,tot,['#E8372A','#F07A1A','#D4367A','#7B4FD4','#2A74E8','#0FA898'],'₱'+fmt(tE));
+    h+=`<div class="pie-wrap"><div class="pie-title"><span>June 2025 — Expense by Category</span><span style="font-size:10px;color:var(--ink4)">Tap slice to filter</span></div><div class="pie-row">${p.svg}<div style="flex:1;display:flex;flex-direction:column;gap:4px">${p.leg}</div></div></div>`;
+
+    if(selectedPieCat){
+      const filTxs=activeTxs.filter(t=>t.t==='expense'&&t.cat===selectedPieCat);
+      const filTot=filTxs.reduce((s,t)=>s+t.amt,0);
+      const ci=catInfo(selectedPieCat);
+      h+=`<div class="filter-info-bar">
+        <div class="filter-info-txt">Showing: ${ci.ico} ${ci.nm} — ₱${fmt(filTot)} (${filTxs.length} transactions)</div>
+        <button class="filter-clear-btn" onclick="clearPieFilter()">✕ Clear</button>
+      </div><div class="txcard" style="margin-bottom:2px">`;
+      filTxs.forEach(t=>{
+        h+=`<div class="tx">
+          <div class="tx-ico" style="background:${ci.bg}">${ci.ico}</div>
+          <div class="tx-mid"><div class="tx-cat">${t.nm}</div><div class="tx-acct">${t.date} · ${t.acct}</div>${t.note?`<div class="tx-note">${t.note}</div>`:''}</div>
+          <div class="tx-amt exp">- ₱${fmt(t.amt)}</div>
+        </div>`;
+      });
+      h+='</div>';
+    }
+
+    h+=`<div class="budget-card"><div class="bc-title"><span>Budget vs Spending</span><span class="bc-lbl">June 2025</span></div>`;
+    cats.forEach(([id,spent])=>{
+      const ci=catInfo(id);const bud=BUDGETS[id]||2000;const pct=Math.min(100,Math.round(spent/bud*100));
+      const bc=pct>=90?'#E8372A':pct>=70?'#F07A1A':'#1DA462';
+      h+=`<div class="budrow"><div class="budrow-top"><div class="budrow-nm">${ci.ico} ${ci.nm}</div><div class="budrow-amts"><b>₱${fmt(spent)}</b> / ₱${fmt(bud)}</div></div>
+        <div class="bbg"><div class="bbar" style="width:${pct}%;background:${bc}"></div></div></div>`;
+    });
+    h+='</div>';
+  } else if(statMode==='income'){
+    const m={};activeTxs.filter(t=>t.t==='income').forEach(t=>{m[t.cat]=(m[t.cat]||0)+t.amt;});
+    const cats=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+    const p=buildPie(cats,tI,['#2A74E8','#0FA898','#1DA462','#F07A1A','#7B4FD4','#8C8C8C'],'₱'+fmt(tI));
+    h+=`<div class="pie-wrap"><div class="pie-title"><span>June 2025 — Income by Source</span><span style="font-size:10px;color:var(--ink4)">Tap slice to filter</span></div><div class="pie-row">${p.svg}<div style="flex:1;display:flex;flex-direction:column;gap:4px">${p.leg}</div></div></div>`;
+
+    if(selectedPieCat){
+      const filTxs=activeTxs.filter(t=>t.t==='income'&&t.cat===selectedPieCat);
+      const filTot=filTxs.reduce((s,t)=>s+t.amt,0);
+      const ci=catInfo(selectedPieCat);
+      h+=`<div class="filter-info-bar">
+        <div class="filter-info-txt">Showing: ${ci.ico} ${ci.nm} — ₱${fmt(filTot)} (${filTxs.length} transactions)</div>
+        <button class="filter-clear-btn" onclick="clearPieFilter()">✕ Clear</button>
+      </div><div class="txcard" style="margin-bottom:2px">`;
+      filTxs.forEach(t=>{
+        h+=`<div class="tx">
+          <div class="tx-ico" style="background:${ci.bg}">${ci.ico}</div>
+          <div class="tx-mid"><div class="tx-cat">${t.nm}</div><div class="tx-acct">${t.date} · ${t.acct}</div>${t.note?`<div class="tx-note">${t.note}</div>`:''}</div>
+          <div class="tx-amt inc">+ ₱${fmt(t.amt)}</div>
+        </div>`;
+      });
+      h+='</div>';
+    }else{
+      h+='<div class="txcard">';
+      activeTxs.filter(t=>t.t==='income').forEach(t=>{const ci=catInfo(t.cat);
+        h+=`<div class="tx"><div class="tx-ico" style="background:${ci.bg}">${ci.ico}</div>
+          <div class="tx-mid"><div class="tx-cat">${t.nm}</div><div class="tx-acct">${t.acct} · ${t.date}</div>${t.note?`<div class="tx-note">${t.note}</div>`:''}</div>
+          <div class="tx-amt inc">+ ₱${fmt(t.amt)}</div></div>`;
+      });
+      h+='</div>';
+    }
+  } else {
+    const cs={};activeTxs.filter(t=>t.t==='expense').forEach(t=>{cs[t.cat]=(cs[t.cat]||0)+t.amt;});
+    let tB=0,tS=0;Object.values(BUDGETS).forEach(b=>tB+=b);Object.values(cs).forEach(s=>tS+=s);
+    h+=`<div class="budget-card"><div class="bc-title"><span>Overall Budget</span><span class="bc-lbl">₱${fmt(tS)} / ₱${fmt(tB)}</span></div>
+      <div class="bbg" style="height:10px;margin-bottom:16px"><div class="bbar" style="width:${Math.min(100,Math.round(tS/tB*100))}%;background:${tS/tB>.9?'var(--red)':'var(--orange)'}"></div></div>`;
+    Object.entries(BUDGETS).forEach(([id,bud])=>{const spent=cs[id]||0;const ci=catInfo(id);const pct=Math.min(100,Math.round(spent/bud*100));
+      const bc=pct>=100?'#E8372A':pct>=75?'#F07A1A':'#1DA462';
+      h+=`<div class="budrow"><div class="budrow-top"><div class="budrow-nm">${ci.ico} ${ci.nm}</div><div class="budrow-amts"><b>₱${fmt(spent)}</b> / ₱${fmt(bud)}</div></div>
+        <div class="bbg"><div class="bbar" style="width:${pct}%;background:${bc}"></div></div></div>`;
+    });
+    h+='</div>';
+  }
+  document.getElementById('stats-body').innerHTML=h+'<div class="spacer"></div>';
+}
+
+/* ══════════════════════════════════════════════════════════
+   SAVINGS GOALS
+══════════════════════════════════════════════════════════ */
+function renderGoals(){
+  let totTarget=0,totSaved=0;
+  SAVINGS_GOALS.forEach(g=>{totTarget+=g.target;totSaved+=g.saved;});
+  const overallPct=totTarget>0?Math.min(100,Math.round(totSaved/totTarget*100)):0;
+
+  let h=`<div class="goal-summary-card">
+    <div class="gsc-top">
+      <div class="gsc-lbl">Total Savings Progress</div>
+      <div class="gsc-pct">${overallPct}%</div>
+    </div>
+    <div class="gsc-val">₱${fmt(totSaved)}</div>
+    <div class="gsc-sub">of ₱${fmt(totTarget)} overall target</div>
+    <div class="bbg" style="height:10px">
+      <div class="bbar" style="width:${overallPct}%;background:${overallPct>=75?'var(--green)':overallPct>=40?'var(--orange)':'var(--red)'}"></div>
+    </div>
+  </div>`;
+
+  h+=`<div class="slbl">Your Savings Goals (${SAVINGS_GOALS.length})</div>`;
+
+  SAVINGS_GOALS.forEach(g=>{
+    const pct=Math.min(100,Math.round((g.saved/g.target)*100));
+    const barCol=pct>=75?'var(--green)':pct>=40?'var(--orange)':'var(--red)';
+
+    let estText='Target reached! 🎉';
+    if(g.saved<g.target){
+      const remaining=g.target-g.saved;
+      const mContrib=g.monthly||1000;
+      const monthsNeeded=Math.ceil(remaining/mContrib);
+      const estDate=new Date(2025,5+monthsNeeded,1);
+      estText=`Est. completion: ${MONTHS[estDate.getMonth()]} ${estDate.getFullYear()} (+₱${fmt(mContrib)}/mo)`;
+    }
+
+    h+=`<div class="goal-card">
+      <div class="gc-hdr">
+        <div class="gc-ico">${g.ico}</div>
+        <div class="gc-nm">${g.nm}</div>
+        <div class="gc-pct" style="color:${barCol}">${pct}%</div>
+      </div>
+      <div class="gc-amts">
+        <div>Saved: <b>₱${fmt(g.saved)}</b></div>
+        <div>Target: <b>₱${fmt(g.target)}</b></div>
+      </div>
+      <div class="bbg" style="height:8px">
+        <div class="bbar" style="width:${pct}%;background:${barCol}"></div>
+      </div>
+      <div class="gc-meta">
+        <div class="gc-est">${estText}</div>
+        <button class="gc-add-btn" onclick="openFundsModal('${g.id}')">＋ Add Funds</button>
+      </div>
+    </div>`;
+  });
+
+  h+='<div class="spacer"></div>';
+  document.getElementById('goals-body').innerHTML=h;
+}
+
+function showAddGoalModal(){
+  newGoalEmoji='🎯';
+  document.getElementById('goal-name-input').value='';
+  document.getElementById('goal-target-input').value='';
+  document.getElementById('goal-monthly-input').value='';
+  renderGoalEmojiGrid();
+  document.getElementById('goal-modal').classList.add('on');
+}
+function hideAddGoalModal(){
+  document.getElementById('goal-modal').classList.remove('on');
+}
+function renderGoalEmojiGrid(){
+  const list=['🎯','🛡️','✈️','💻','🏠','🚗','💍','🎓','🏖️','📱','🚲','👶','🛍️','💰','🏥','⭐'];
+  document.getElementById('goal-emoji-grid').innerHTML=list.map(e=>`
+    <div class="e-pick${newGoalEmoji===e?' on':''}" onclick="newGoalEmoji='${e}';renderGoalEmojiGrid()">${e}</div>
+  `).join('');
+}
+function saveGoal(){
+  const nm=document.getElementById('goal-name-input').value.trim();
+  const target=parseFloat(document.getElementById('goal-target-input').value);
+  const monthly=parseFloat(document.getElementById('goal-monthly-input').value)||0;
+  if(!nm){toast2('⚠ Please enter a goal name');return;}
+  if(!target||target<=0){toast2('⚠ Enter a valid target amount');return;}
+
+  SAVINGS_GOALS.push({
+    id:'g_'+genId(),
+    nm,
+    ico:newGoalEmoji||'🎯',
+    target,
+    saved:0,
+    monthly,
+    updatedAt:Date.now()
+  });
+  hideAddGoalModal();
+  SyncEngine.queueChange('goals');
+  renderGoals();
+  toast2('✔ Goal "'+nm+'" created!');
+}
+
+function openFundsModal(goalId){
+  selGoalForFunds=SAVINGS_GOALS.find(g=>g.id===goalId);
+  if(!selGoalForFunds)return;
+  document.getElementById('funds-title').textContent='Add Funds to Goal';
+  document.getElementById('funds-goal-info').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">${selGoalForFunds.ico}</span>
+      <div>
+        <div style="font-weight:700">${selGoalForFunds.nm}</div>
+        <div style="font-size:11px;color:var(--ink4)">Currently ₱${fmt(selGoalForFunds.saved)} of ₱${fmt(selGoalForFunds.target)}</div>
+      </div>
+    </div>`;
+  document.getElementById('funds-amt-input').value='';
+  document.getElementById('funds-modal').classList.add('on');
+}
+function hideFundsModal(){
+  document.getElementById('funds-modal').classList.remove('on');
+  selGoalForFunds=null;
+}
+function setQuickFunds(amt){
+  document.getElementById('funds-amt-input').value=amt;
+}
+function confirmAddFunds(){
+  if(!selGoalForFunds)return;
+  const amt=parseFloat(document.getElementById('funds-amt-input').value);
+  if(!amt||amt<=0){toast2('⚠ Enter a valid deposit amount');return;}
+  selGoalForFunds.saved+=amt;
+  selGoalForFunds.updatedAt=Date.now();
+  hideFundsModal();
+  SyncEngine.queueChange('goals');
+  renderGoals();
+  toast2(`✔ Added ₱${fmt(amt)} to ${selGoalForFunds.nm}`);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RECURRING TRANSACTIONS
+══════════════════════════════════════════════════════════ */
+function renderRecurringList(){
+  let h='';
+  RECURRING_TX.forEach(r=>{
+    const ci=catInfo(r.cat);
+    const isPaused=!r.enabled;
+    h+=`<div class="rec-row${isPaused?' paused':''}">
+      <div class="rec-ico" style="background:${ci.bg}">${r.ico||ci.ico}</div>
+      <div class="rec-mid">
+        <div class="rec-nm">${r.nm}</div>
+        <div class="rec-detail">${r.freq} · ${r.acct}</div>
+        <div class="rec-due">${isPaused?'Paused':'Next: '+r.nextDue}</div>
+      </div>
+      <div class="rec-right">
+        <div class="rec-amt">₱${fmt(r.amt)}</div>
+        <div class="rec-actions">
+          <button class="rec-post-btn" onclick="postRecurringNow('${r.id}')">Post Now</button>
+          <div class="toggle ${r.enabled?'on':''}" onclick="toggleRecurringItem('${r.id}')" style="transform:scale(0.8);transform-origin:right center">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('recurring-list-wrap').innerHTML=h;
+}
+
+function toggleRecurringItem(id){
+  const r=RECURRING_TX.find(x=>x.id===id);
+  if(!r)return;
+  r.enabled=!r.enabled;
+  r.updatedAt=Date.now();
+  SyncEngine.queueChange('recurring');
+  renderRecurringList();
+  toast2(r.enabled?`✔ ${r.nm} activated`:`${r.nm} paused`);
+}
+
+function postRecurringNow(id){
+  const r=RECURRING_TX.find(x=>x.id===id);
+  if(!r)return;
+  ALL_TX.unshift({
+    id:genId(),
+    t:'expense',
+    cat:r.cat,
+    nm:r.nm,
+    acct:r.acct,
+    amt:r.amt,
+    date:'Jun 8',
+    note:'Recurring payment ('+r.freq+')',
+    synced:true,
+    updatedAt:Date.now()
+  });
+  SyncEngine.queueChange('transactions');
+  renderTrans();
+  renderStats();
+  toast2(`✔ Posted ${r.nm} — ₱${fmt(r.amt)} to transactions`);
+}
+
+function showAddRecurringModal(){
+  document.getElementById('rec-name-input').value='';
+  document.getElementById('rec-amt-input').value='';
+  document.getElementById('rec-due-input').value='Jul 15';
+  newRecFreq='Monthly';
+  newRecCat='sub';
+
+  const acctSel=document.getElementById('rec-acct-select');
+  acctSel.innerHTML=ACCOUNTS_LIST.map(a=>`<option value="${a}">${a}</option>`).join('');
+
+  document.querySelectorAll('#rec-freq-group .pill-btn').forEach(b=>{
+    b.classList.remove('on');
+    if(b.textContent==='Monthly')b.classList.add('on');
+  });
+
+  renderRecCatGrid();
+  document.getElementById('rec-modal').classList.add('on');
+}
+function hideAddRecurringModal(){
+  document.getElementById('rec-modal').classList.remove('on');
+}
+function setRecFreq(freq,el){
+  newRecFreq=freq;
+  document.querySelectorAll('#rec-freq-group .pill-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+function renderRecCatGrid(){
+  document.getElementById('rec-cgrid').innerHTML=ECATS.slice(0,8).map(c=>`
+    <div class="ctile${newRecCat===c.id?' on':''}" onclick="newRecCat='${c.id}';renderRecCatGrid()">
+      <div class="ctile-ico" style="background:${c.bg}">${c.ico}</div>
+      <div class="ctile-nm">${c.nm}</div>
+    </div>
+  `).join('');
+}
+function saveRecurring(){
+  const nm=document.getElementById('rec-name-input').value.trim();
+  const amt=parseFloat(document.getElementById('rec-amt-input').value);
+  const acct=document.getElementById('rec-acct-select').value||'BDO Mastercard';
+  const nextDue=document.getElementById('rec-due-input').value.trim()||'Jul 15';
+  if(!nm){toast2('⚠ Please enter a name');return;}
+  if(!amt||amt<=0){toast2('⚠ Enter a valid amount');return;}
+
+  const ci=catInfo(newRecCat);
+  RECURRING_TX.push({
+    id:'r_'+genId(),
+    nm,
+    ico:ci.ico,
+    cat:newRecCat,
+    amt,
+    freq:newRecFreq,
+    nextDue,
+    acct,
+    enabled:true,
+    updatedAt:Date.now()
+  });
+
+  hideAddRecurringModal();
+  SyncEngine.queueChange('recurring');
+  renderRecurringList();
+  toast2(`✔ Added recurring ${nm}`);
+}
+
+/* ══════════════════════════════════════════════════════════
+   AI CATEGORY SUGGESTIONS
+══════════════════════════════════════════════════════════ */
+function focusMemoInput(){
+  const el=document.getElementById('m-memo-input');
+  if(el)el.focus();
+}
+
+function handleMemoChange(val){
+  clearTimeout(memoDebounceTimer);
+  const text=val.trim();
+  if(!text||text.length<2){
+    hideAiSuggestion();
+    return;
+  }
+  showAiLoading();
+  memoDebounceTimer=setTimeout(()=>{
+    fetchAiCategorySuggestion(text);
+  },800);
+}
+
+function showAiLoading(){
+  const b=document.getElementById('ai-banner');
+  const sp=document.getElementById('ai-spinner');
+  const bd=document.getElementById('ai-badge');
+  b.style.display='flex';
+  sp.style.display='block';
+  bd.style.display='none';
+}
+
+function hideAiSuggestion(){
+  const b=document.getElementById('ai-banner');
+  if(b)b.style.display='none';
+  suggestedCat=null;
+}
+
+async function fetchAiCategorySuggestion(memoText){
+  const catsList=modalType==='income'?ICATS:ECATS;
+  const catNames=catsList.map(c=>c.nm).join(', ');
+  const promptText=`Given the merchant or memo text '${memoText}', which single expense or income category best fits from this list: ${catNames}? Reply with only the category name, nothing else.`;
+
+  let matchedCat=null;
+
+  if(GEMINI_API_KEY&&GEMINI_API_KEY!=='YOUR_GEMINI_API_KEY_HERE'){
+    try{
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:promptText}]}]})
+      });
+      if(res.ok){
+        const data=await res.json();
+        const raw=data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
+        matchedCat=catsList.find(c=>raw.toLowerCase().includes(c.nm.toLowerCase()));
+      }
+    }catch(err){
+      matchedCat=null;
+    }
+  }
+
+  if(!matchedCat){
+    const lower=memoText.toLowerCase();
+    const rules=[
+      {keys:['jollibee','mcdonald','mcdo','chowking','kfc','burger','starbucks','coffee','pizza','ramen','restaurant','dinner','lunch','food','shakeys'],id:'food'},
+      {keys:['grab','taxi','angkas','joyride','fuel','shell','petron','caltex','parking','toll','fare','gas'],id:'transport'},
+      {keys:['shopee','lazada','zara','h&m','uniqlo','mall','clothes','shoes','shopping','bench'],id:'shopping'},
+      {keys:['meralco','electric','pldt','globe','smart','water','maynilad','bill','internet','wifi','hoa'],id:'bills'},
+      {keys:['netflix','spotify','youtube','icloud','adobe','prime','disney','subscription','sub'],id:'sub'},
+      {keys:['mercury','watsons','pharmacy','drug','clinic','hospital','doctor','dentist','medicine','gym'],id:'health'},
+      {keys:['cinema','movie','game','steam','playstation','arcade','concert'],id:'leisure'},
+      {keys:['supermarket','grocery','puregold','robinsons','sm hypermarket','waltermart','landers','s&r'],id:'grocery'},
+      {keys:['salary','payroll','sweldo','paycheck'],id:'salary'},
+      {keys:['freelance','upwork','client','project','fiverr'],id:'freelance'},
+      {keys:['interest','dividend','stock','crypto','invest'],id:'invest'},
+    ];
+    for(const rule of rules){
+      if(rule.keys.some(k=>lower.includes(k))){
+        matchedCat=catsList.find(c=>c.id===rule.id);
+        if(matchedCat)break;
+      }
+    }
+  }
+
+  const b=document.getElementById('ai-banner');
+  const sp=document.getElementById('ai-spinner');
+  const bd=document.getElementById('ai-badge');
+  sp.style.display='none';
+
+  if(matchedCat){
+    suggestedCat=matchedCat;
+    bd.textContent=`${matchedCat.ico} ${matchedCat.nm}`;
+    bd.style.display='inline-flex';
+    b.style.display='flex';
+  }else{
+    b.style.display='none';
+    suggestedCat=null;
+  }
+}
+
+function applyAiSuggestion(){
+  if(!suggestedCat)return;
+  pickCat(suggestedCat.id,suggestedCat.nm);
+  toast2(`✔ Auto-selected ${suggestedCat.ico} ${suggestedCat.nm}`);
+  hideAiSuggestion();
+}
+
+/* ══════════════════════════════════════════════════════════
+   FEATURE 4: PROFILE & DEVICE MANAGEMENT
+══════════════════════════════════════════════════════════ */
+function renderProfile(){
+  const isGuest=Boolean(currentUser&&currentUser.isGuest);
+  const name=currentUser?(currentUser.displayName||'User'):'Guest User';
+  const email=currentUser?(currentUser.email||'Offline'):'Not signed in';
+  const firstLetter=name.charAt(0).toUpperCase()||'U';
+  const photoURL=currentUser?currentUser.photoURL:null;
+
+  let h=`<div class="profile-card">
+    <div class="profile-avatar">${photoURL?`<img src="${photoURL}" alt="avatar">`:firstLetter}</div>
+    <div class="profile-info">
+      <div class="profile-name">${name}</div>
+      <div class="profile-email">${email}</div>
+      <div class="profile-meta">Member since: ${isGuest?'Guest Session':'June 2025'}</div>
+      ${!isGuest?`<span class="profile-edit-link" onclick="editDisplayName()">Edit Name</span>`:''}
+    </div>
+  </div>`;
+
+  // Sync & Backup section
+  h+=`<div class="slbl">Sync &amp; Cloud Backup</div>
+  <div class="more-card">
+    <div class="more-row" style="cursor:default">
+      <div class="more-ico" style="background:var(--blue-lt)">☁️</div>
+      <div style="flex:1"><div class="more-nm">Last Synced</div><div class="more-sub" id="profile-last-sync">${lastSyncTimestampText}</div></div>
+      <button class="conn-btn connect" onclick="triggerManualSync()">Sync Now</button>
+    </div>
+    <div class="more-row" onclick="forceDownloadFromCloud()">
+      <div class="more-ico" style="background:var(--green-lt)">📥</div>
+      <div style="flex:1"><div class="more-nm">Force Download from Cloud</div><div class="more-sub">Overwrite local data with cloud snapshot</div></div>
+      <div class="more-arr">›</div>
+    </div>
+    <div class="more-row" onclick="forceUploadToCloud()">
+      <div class="more-ico" style="background:var(--orange-lt)">📤</div>
+      <div style="flex:1"><div class="more-nm">Force Upload to Cloud</div><div class="more-sub">Push current local data to cloud database</div></div>
+      <div class="more-arr">›</div>
+    </div>
+  </div>`;
+
+  // Connected Devices section
+  h+=`<div class="slbl">Connected Devices</div>
+  <div class="more-card">
+    <div class="device-row">
+      <div class="device-ico">📱</div>
+      <div style="flex:1"><div class="device-nm">${getDeviceDescriptor()} <span style="font-size:9.5px;color:var(--green);font-weight:700">· This Device</span></div><div class="device-time">Active now</div></div>
+    </div>
+    <div class="device-row">
+      <div class="device-ico">💻</div>
+      <div style="flex:1"><div class="device-nm">macOS — Chrome</div><div class="device-time">Active 2 hours ago</div></div>
+      <button class="device-rm-btn" onclick="removeDevicePrompt('macOS — Chrome')">Remove</button>
+    </div>
+    <div class="device-row">
+      <div class="device-ico">📱</div>
+      <div style="flex:1"><div class="device-nm">iPad — Safari</div><div class="device-time">Active Yesterday</div></div>
+      <button class="device-rm-btn" onclick="removeDevicePrompt('iPad — Safari')">Remove</button>
+    </div>
+  </div>`;
+
+  // Data Section
+  h+=`<div class="slbl">Data Management</div>
+  <div class="more-card">
+    <div class="more-row" onclick="exportDataAsJson()">
+      <div class="more-ico" style="background:var(--teal-lt)">💾</div>
+      <div style="flex:1"><div class="more-nm">Export all data as JSON</div><div class="more-sub">Download offline backup file</div></div>
+      <div class="more-arr">›</div>
+    </div>
+    <div class="more-row" onclick="document.getElementById('json-import-input').click()">
+      <div class="more-ico" style="background:var(--purple-lt)">📂</div>
+      <div style="flex:1"><div class="more-nm">Import from JSON backup</div><div class="more-sub">Restore your data from a file</div></div>
+      <div class="more-arr">›</div>
+    </div>
+    <div class="more-row" onclick="showDeleteConfirmModal()">
+      <div class="more-ico" style="background:var(--red-lt)">🗑️</div>
+      <div style="flex:1"><div class="more-nm" style="color:var(--red)">Delete all data</div><div class="more-sub">Wipe transactions &amp; cloud records</div></div>
+      <div class="more-arr">›</div>
+    </div>
+  </div>`;
+
+  // Auth Section
+  h+=`<div class="slbl">Account Session</div>
+  <div class="more-card">
+    ${isGuest?`
+      <div class="more-row" onclick="showAuthScreen('signin')">
+        <div class="more-ico" style="background:var(--blue-lt)">🔑</div>
+        <div style="flex:1"><div class="more-nm">Sign In / Register Account</div><div class="more-sub">Connect your free cloud sync</div></div>
+        <div class="more-arr">›</div>
+      </div>
+    `:`
+      <div class="more-row" onclick="handleSignOut()">
+        <div class="more-ico" style="background:var(--gray-lt)">🚪</div>
+        <div style="flex:1"><div class="more-nm">Sign Out</div><div class="more-sub">Log out of this device</div></div>
+        <div class="more-arr">›</div>
+      </div>
+      <div class="more-row" onclick="handleSignOutAllDevices()">
+        <div class="more-ico" style="background:var(--red-lt)">🚫</div>
+        <div style="flex:1"><div class="more-nm" style="color:var(--red)">Sign Out of All Devices</div><div class="more-sub">Revoke sessions everywhere</div></div>
+        <div class="more-arr">›</div>
+      </div>
+    `}
+  </div><div class="spacer"></div>`;
+
+  document.getElementById('profile-body').innerHTML=h;
+}
+
+function editDisplayName(){
+  const curName=currentUser?(currentUser.displayName||''):'';
+  const newName=prompt("Update your display name:",curName);
+  if(newName&&newName.trim()){
+    if(currentUser&&!currentUser.isGuest){
+      currentUser.updateProfile({displayName:newName.trim()}).then(()=>{
+        if(firestoreDb){
+          firestoreDb.collection('users').doc(currentUser.uid).collection('profile').doc('info').update({
+            displayName:newName.trim()
+          });
+        }
+        renderProfile();
+        toast2("Display name updated!");
+      }).catch(e=>toast2(e.message));
+    }
+  }
+}
+
+function removeDevicePrompt(devName){
+  if(confirm(`Sign out device "${devName}"?`)){
+    toast2(`✔ Session for ${devName} revoked`);
+  }
+}
+
+async function forceDownloadFromCloud(){
+  if(currentUser&&currentUser.isGuest){
+    toast2('⚠ Sign in to download cloud snapshots');
+    return;
+  }
+  if(!confirm("This will overwrite your local data with the latest cloud snapshot. Are you sure?"))return;
+  if(!isFirebaseReady()||!firestoreDb){
+    toast2('Firebase is not connected');return;
+  }
+  showAuthSpinner('Downloading cloud snapshot…');
+  try{
+    const uid=currentUser.uid;
+    const baseRef=firestoreDb.collection('users').doc(uid).collection('data');
+    const [txSnap,catSnap,accSnap,glSnap,rcSnap]=await Promise.all([
+      baseRef.doc('transactions').get(),
+      baseRef.doc('categories').get(),
+      baseRef.doc('accounts').get(),
+      baseRef.doc('goals').get(),
+      baseRef.doc('recurring').get()
+    ]);
+    if(txSnap.exists&&Array.isArray(txSnap.data().items))ALL_TX=txSnap.data().items;
+    if(catSnap.exists){
+      if(catSnap.data().expense)ECATS=catSnap.data().expense;
+      if(catSnap.data().income)ICATS=catSnap.data().income;
+    }
+    if(accSnap.exists&&Array.isArray(accSnap.data().items))LINKED_ACCOUNTS=accSnap.data().items;
+    if(glSnap.exists&&Array.isArray(glSnap.data().items))SAVINGS_GOALS=glSnap.data().items;
+    if(rcSnap.exists&&Array.isArray(rcSnap.data().items))RECURRING_TX=rcSnap.data().items;
+
+    saveLocalState();
+    renderAllViews();
+    hideAuthSpinner();
+    toast2("✔ Local data refreshed from cloud!");
+  }catch(e){
+    hideAuthSpinner();
+    toast2("Failed to download cloud data: "+e.message);
+  }
+}
+
+async function forceUploadToCloud(){
+  if(currentUser&&currentUser.isGuest){
+    toast2('⚠ Sign in to backup data to the cloud');
+    return;
+  }
+  if(!confirm("This will overwrite your cloud data with local data. Are you sure?"))return;
+  showAuthSpinner('Pushing local data to cloud…');
+  try{
+    await SyncEngine.pushToFirestore('all',true);
+    hideAuthSpinner();
+    toast2("✔ Cloud database updated with local data!");
+  }catch(e){
+    hideAuthSpinner();
+    toast2("Failed to upload: "+e.message);
+  }
+}
+
+function exportDataAsJson(){
+  const data={
+    version:'2.0',
+    exportDate:new Date().toISOString(),
+    transactions:ALL_TX,
+    categories:{expense:ECATS,income:ICATS},
+    accounts:LINKED_ACCOUNTS,
+    goals:SAVINGS_GOALS,
+    recurring:RECURRING_TX,
+    sms:SMS_MSGS
+  };
+  const jsonStr=JSON.stringify(data,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download=`moneymanager_backup_${d}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast2("✔ Backup downloaded successfully!");
+}
+
+function handleFileImport(e){
+  const file=e.target.files?.[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(evt){
+    try{
+      const data=JSON.parse(evt.target.result);
+      if(!data||!Array.isArray(data.transactions)){
+        toast2("⚠ Invalid Money Manager JSON backup file");
+        return;
+      }
+      ALL_TX=data.transactions;
+      if(data.categories){
+        if(data.categories.expense)ECATS=data.categories.expense;
+        if(data.categories.income)ICATS=data.categories.income;
+      }
+      if(data.accounts)LINKED_ACCOUNTS=data.accounts;
+      if(data.goals)SAVINGS_GOALS=data.goals;
+      if(data.recurring)RECURRING_TX=data.recurring;
+
+      saveLocalState();
+      SyncEngine.queueChange('all');
+      renderAllViews();
+      toast2("✔ Data successfully imported!");
+    }catch(err){
+      toast2("⚠ Error reading backup: "+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showDeleteConfirmModal(){
+  document.getElementById('delete-confirm-input').value='';
+  document.getElementById('delete-confirm-modal').classList.add('on');
+}
+function hideDeleteConfirmModal(){
+  document.getElementById('delete-confirm-modal').classList.remove('on');
+}
+async function confirmDeleteAllData(){
+  const val=document.getElementById('delete-confirm-input').value.trim();
+  if(val!=='DELETE'){
+    toast2('⚠ Please type DELETE exactly');
+    return;
+  }
+  showAuthSpinner('Wiping all data…');
+  try{
+    if(currentUser&&!currentUser.isGuest&&firestoreDb){
+      const uid=currentUser.uid;
+      const baseRef=firestoreDb.collection('users').doc(uid).collection('data');
+      await Promise.all([
+        baseRef.doc('transactions').delete(),
+        baseRef.doc('categories').delete(),
+        baseRef.doc('accounts').delete(),
+        baseRef.doc('goals').delete(),
+        baseRef.doc('recurring').delete(),
+        baseRef.doc('sms_inbox').delete(),
+        baseRef.doc('settings').delete()
+      ]);
+    }
+    // Reset local data to empty/clean states
+    ALL_TX=[];
+    SAVINGS_GOALS=[];
+    RECURRING_TX=[];
+    saveLocalState();
+    hideDeleteConfirmModal();
+    hideAuthSpinner();
+    renderAllViews();
+    toast2('All data has been permanently wiped');
+  }catch(e){
+    hideAuthSpinner();
+    toast2('Error wiping data: '+e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACCOUNTS PAGE
+══════════════════════════════════════════════════════════ */
+function renderAccounts(){
+  const linked=LINKED_ACCOUNTS.filter(a=>a.linked);
+  const netWorth=linked.reduce((s,a)=>s+a.balance,0);
+  let h=`<div class="nw-banner"><div><div class="nw-lbl">Net Worth</div><div class="nw-val">₱${fmt(netWorth)}</div></div><div style="font-size:22px">💰</div></div>`;
+  ['Cash','Bank','E-Wallet','Credit'].forEach(type=>{
+    const accts=linked.filter(a=>a.type===type);if(!accts.length)return;
+    const tot=accts.reduce((s,a)=>s+a.balance,0);
+    h+=`<div class="acct-section"><div class="acct-sec-hd"><div class="acct-sec-nm">${type}</div><div class="acct-sec-total" style="${tot<0?'color:var(--red)':''}">${tot<0?'-':''}₱${fmt(Math.abs(tot))}</div></div><div class="acct-card">`;
+    accts.forEach(a=>{
+      h+=`<div class="acct-row" onclick="toast2('${a.nm} — Last sync: ${a.lastSync}')">
+        <div class="acct-ico" style="background:${a.bg}">${a.ico}</div>
+        <div class="acct-info"><div class="acct-nm">${a.nm} <span class="linked-pill">⚡ Linked</span></div><div class="acct-sub">${a.sub} · ${a.lastSync}</div></div>
+        <div class="acct-bal ${a.balance<0?'neg':''}">${a.balance<0?'-':''}₱${fmt(Math.abs(a.balance))}</div></div>`;
+    });
+    h+='</div></div>';
+  });
+  h+=`<div style="padding:10px 14px"><div style="background:var(--blue-lt);border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px" onclick="showLinkModal()">
+    <div style="font-size:20px">🔗</div>
+    <div><div style="font-size:13px;font-weight:600;color:var(--blue)">Link more accounts</div><div style="font-size:11px;color:var(--ink4);margin-top:2px">Banks, e-wallets, credit cards</div></div>
+    <div style="font-size:15px;color:var(--blue);margin-left:auto">›</div>
+  </div></div><div class="spacer"></div>`;
+  document.getElementById('acct-body').innerHTML=h;
+  document.getElementById('bank-status-lbl').textContent=linked.length+' accounts linked';
+}
+
+function showLinkModal(){
+  let h=`<div style="background:var(--blue-lt);padding:14px 16px;margin-bottom:2px">
+    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px">🔒 Secure Bank Sync</div>
+    <div style="font-size:12px;color:var(--ink3);line-height:1.6">Your credentials are encrypted and stored locally. Read-only access via your bank's official API. PINs and passwords are never stored.</div>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info"><div class="toggle-lbl">Auto-sync transactions</div><div class="toggle-sub">Pull new transactions every 30 min</div></div>
+    <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+  </div>`;
+  ['Bank','E-Wallet','Cash','Credit'].forEach(type=>{
+    const accts=LINKED_ACCOUNTS.filter(a=>a.type===type);
+    h+=`<div class="slbl">${type==='E-Wallet'?'E-Wallets':type+'s'}</div><div style="background:var(--card)">`;
+    accts.forEach(a=>{
+      h+=`<div class="bank-tile" onclick="toggleLink('${a.id}')">
+        <div class="bank-logo" style="background:${a.bg}">${a.ico}</div>
+        <div class="bank-info"><div class="bank-nm">${a.nm}</div><div class="bank-type">${a.sub}</div>
+          ${a.linked?`<div style="font-size:10px;color:var(--green);margin-top:3px">⚡ Last sync: ${a.lastSync}</div>`:''}
+        </div>
+        <button class="conn-btn ${a.linked?'connected':'connect'}">${a.linked?'✓ Linked':'Connect'}</button>
+      </div>`;
+    });
+    h+='</div>';
+  });
+  h+='<div class="spacer"></div>';
+  document.getElementById('link-body').innerHTML=h;
+  document.getElementById('link-modal').classList.add('on');
+}
+function hideLinkModal(){document.getElementById('link-modal').classList.remove('on');renderAccounts();}
+function toggleLink(id){
+  const a=LINKED_ACCOUNTS.find(x=>x.id===id);if(!a)return;
+  if(!a.linked){
+    a.linked=true;a.balance=a.balance||Math.floor(Math.random()*20000)+1000;a.lastSync='Just now';
+    if(!ACCOUNTS_LIST.includes(a.nm))ACCOUNTS_LIST.push(a.nm);
+    toast2('✔ '+a.nm+' linked successfully');
+  } else {a.linked=false;toast2(a.nm+' unlinked');}
+  SyncEngine.queueChange('accounts');
+  showLinkModal();
+}
+
+/* ══════════════════════════════════════════════════════════
+   SMS MODAL
+══════════════════════════════════════════════════════════ */
+function showSmsModal(){renderSmsModal();document.getElementById('sms-modal').classList.add('on');}
+function hideSmsModal(){document.getElementById('sms-modal').classList.remove('on');}
+function renderSmsModal(){
+  const unread=SMS_MSGS.filter(m=>!m.read).length;
+  const imported=SMS_MSGS.filter(m=>m.imported).length;
+  let h=`<div style="background:var(--card);padding:14px 16px;margin-bottom:2px">
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1;background:var(--green-lt);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:var(--green)">${imported}</div>
+        <div style="font-size:10px;color:var(--ink4);margin-top:2px">Auto-imported</div>
+      </div>
+      <div style="flex:1;background:var(--orange-lt);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:var(--orange)">${unread}</div>
+        <div style="font-size:10px;color:var(--ink4);margin-top:2px">Unread</div>
+      </div>
+      <div style="flex:1;background:var(--blue-lt);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:var(--blue)">${SMS_MSGS.length}</div>
+        <div style="font-size:10px;color:var(--ink4);margin-top:2px">Total</div>
+      </div>
+    </div>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info"><div class="toggle-lbl">Read SMS Permissions</div><div class="toggle-sub">Allow app to scan incoming messages</div></div>
+    <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info"><div class="toggle-lbl">Auto-import transactions</div><div class="toggle-sub">Automatically record detected payments</div></div>
+    <div class="toggle ${smsAutoImport?'on':''}" onclick="smsAutoImport=!smsAutoImport;renderSmsModal()"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info"><div class="toggle-lbl">Banks &amp; E-wallets only</div><div class="toggle-sub">Filter non-financial messages</div></div>
+    <div class="toggle ${smsBankFilter?'on':''}" onclick="smsBankFilter=!smsBankFilter;renderSmsModal()"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="slbl">Detected Messages</div>
+  <div style="background:var(--card)">`;
+  SMS_MSGS.forEach(msg=>{
+    const ci=catInfo(msg.parsed.cat);const isI=msg.parsed.type==='income';
+    h+=`<div class="sms-notif${msg.read?' read':''}" onclick="handleSmsClick(${msg.id})">
+      <div class="sms-notif-ico" style="background:${msg.bg}">${msg.ico}</div>
+      <div class="sms-body-mid">
+        <div class="sms-sender">${msg.sender} <span style="font-size:10px;font-weight:400;color:var(--ink4)">${msg.time}</span></div>
+        <div class="sms-preview">${msg.text}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;color:${isI?'var(--blue)':'var(--red)'}">
+            ${isI?'+':'-'}₱${fmt(msg.parsed.amt)}</div>
+          <span class="sms-parsed ${msg.imported?'imp':'rev'}">${msg.imported?'✔ Recorded':'⊕ Tap to record'}</span>
+          <span style="background:var(--gray-lt);color:var(--ink4);font-size:10px;padding:2px 7px;border-radius:8px">${ci.ico} ${ci.nm}</span>
+        </div>
+      </div>
+      <div class="sms-time">${msg.time}</div>
+    </div>`;
+  });
+  h+='</div><div class="spacer"></div>';
+  document.getElementById('sms-body').innerHTML=h;
+  document.getElementById('sms-status-lbl').textContent=unread+' new · '+imported+' auto-imported';
+}
+function handleSmsClick(id){
+  const msg=SMS_MSGS.find(m=>m.id===id);if(!msg)return;
+  msg.read=true;
+  if(!msg.imported){
+    ALL_TX.unshift({
+      id:genId(),
+      t:msg.parsed.type,
+      cat:msg.parsed.cat,
+      nm:msg.parsed.nm,
+      acct:msg.sender,
+      amt:msg.parsed.amt,
+      date:'Jun 8',
+      note:'From SMS',
+      synced:true,
+      updatedAt:Date.now()
+    });
+    msg.imported=true;
+    SyncEngine.queueChange('transactions');
+    SyncEngine.queueChange('sms');
+    renderTrans();renderStats();
+    toast2('✔ Imported: '+msg.parsed.nm+' ₱'+fmt(msg.parsed.amt));
+  } else {toast2('Already recorded in ledger');}
+  renderSmsModal();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CATEGORY MANAGER
+══════════════════════════════════════════════════════════ */
+const EMOJI_PICKS=['🍔','🚕','🛒','💡','🎬','💊','🎓','🏠','✈️','🐾','🏋️','👗','☕','📱','🎵','🌿','🍕','🚌','💰','📦','🎮','🏥','👶','🔧','🌟'];
+const COLOR_PICKS=['#E8372A','#F07A1A','#D4A017','#1DA462','#2A74E8','#7B4FD4','#D4367A','#0FA898','#8C8C8C','#3D3D3D'];
+function showCatModal(){renderCatModal();document.getElementById('cat-modal').classList.add('on');}
+function hideCatModal(){document.getElementById('cat-modal').classList.remove('on');}
+function renderCatModal(){
+  let h=`<div style="display:flex;background:var(--card);border-bottom:1px solid var(--line)">
+    <div style="flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${newCatType==='expense'?'var(--red)':'transparent'};color:${newCatType==='expense'?'var(--red)':'var(--ink4)'}" onclick="newCatType='expense';renderCatModal()">Expense</div>
+    <div style="flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid ${newCatType==='income'?'var(--blue)':'transparent'};color:${newCatType==='income'?'var(--blue)':'var(--ink4)'}" onclick="newCatType='income';renderCatModal()">Income</div>
+  </div>`;
+  const list=newCatType==='expense'?ECATS:ICATS;
+  h+=`<div class="slbl">${newCatType==='expense'?'Expense':'Income'} Categories (${list.length})</div><div style="background:var(--card);margin-bottom:2px">`;
+  list.forEach(c=>{
+    h+=`<div class="cat-list-item"><div class="cat-list-ico" style="background:${c.bg}">${c.ico}</div>
+      <div class="cat-list-nm">${c.nm}</div>
+      ${c.custom?`<span class="cat-list-tag">Custom</span><div class="cat-delete" onclick="deleteCustomCat('${c.id}')">🗑</div>`:`<span class="cat-list-tag">Default</span>`}
+    </div>`;
+  });
+  h+=`</div><div class="new-cat-form"><div class="nf-title">＋ Add New Category</div>
+    <div style="font-size:11px;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Choose icon</div>
+    <div class="emoji-grid">`;
+  EMOJI_PICKS.forEach(e=>{h+=`<div class="e-pick${newCatEmoji===e?' on':''}" onclick="newCatEmoji='${e}';renderCatModal()">${e}</div>`;});
+  h+=`</div><div style="font-size:11px;color:var(--ink4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Choose color</div>
+    <div class="color-grid">`;
+  COLOR_PICKS.forEach(c=>{h+=`<div class="c-pick${newCatColor===c?' on':''}" style="background:${c}" onclick="newCatColor='${c}';renderCatModal()"></div>`;});
+  h+=`</div><div style="font-size:11px;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Category name</div>
+    <input class="nf-input" id="nf-name" type="text" placeholder="e.g. Coffee, Gym, Pets…" maxlength="20">
+    <button class="add-cat-btn" onclick="addCustomCat()">＋ Add Category</button>
+  </div><div class="spacer"></div>`;
+  document.getElementById('cat-modal-body').innerHTML=h;
+  document.getElementById('cat-count-lbl').textContent=ECATS.length+' expense · '+ICATS.length+' income';
+}
+function addCustomCat(){
+  const nm=(document.getElementById('nf-name')||{}).value?.trim()||'';
+  if(!nm){toast2('⚠ Enter a category name');return;}
+  const bgMap={'#E8372A':'var(--red-lt)','#F07A1A':'var(--orange-lt)','#D4A017':'var(--yellow-lt)','#1DA462':'var(--green-lt)','#2A74E8':'var(--blue-lt)','#7B4FD4':'var(--purple-lt)','#D4367A':'var(--pink-lt)','#0FA898':'var(--teal-lt)','#8C8C8C':'var(--gray-lt)','#3D3D3D':'var(--gray-lt)'};
+  const nc={id:'c_'+genId(),nm,ico:newCatEmoji,bg:bgMap[newCatColor]||'var(--gray-lt)',col:newCatColor,custom:true,updatedAt:Date.now()};
+  if(newCatType==='expense')ECATS.push(nc);else ICATS.push(nc);
+  SyncEngine.queueChange('categories');
+  toast2('✔ "'+nm+'" added to '+newCatType+' categories');
+  renderCatModal();renderStats();
+}
+function deleteCustomCat(id){
+  ECATS=ECATS.filter(c=>c.id!==id);ICATS=ICATS.filter(c=>c.id!==id);
+  SyncEngine.queueChange('categories');
+  toast2('Category deleted');renderCatModal();
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADD TRANSACTION MODAL
+══════════════════════════════════════════════════════════ */
+function showModal(){
+  kval='';selCat=null;suggestedCat=null;
+  document.getElementById('m-amt').textContent='0';document.getElementById('m-amt').className='amt-num';
+  document.getElementById('m-cat').textContent='Select';document.getElementById('m-cat').className='frow-val ph';
+  document.getElementById('m-acct').textContent=ACCOUNTS_LIST[acctIdx]||'Cash';
+  document.getElementById('m-memo-input').value='';
+  hideAiSuggestion();
+  renderCatGrid('expense');
+  document.querySelectorAll('.ttab').forEach((t,i)=>{t.classList.remove('on');if(i===0)t.classList.add('on');});
+  modalType='expense';document.getElementById('m-title').textContent='Add Expense';
+  document.getElementById('modal').classList.add('on');
+}
+function hideModal(){document.getElementById('modal').classList.remove('on');}
+function setType(t,el){
+  modalType=t;selCat=null;hideAiSuggestion();
+  document.querySelectorAll('.ttab').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+  document.getElementById('m-title').textContent=t==='expense'?'Add Expense':t==='income'?'Add Income':'Add Transfer';
+  document.getElementById('m-cat').textContent='Select';document.getElementById('m-cat').className='frow-val ph';
+  document.getElementById('m-amt').className='amt-num'+(kval?(' has'+(t==='income'?' ic':'')):'');
+  renderCatGrid(t);
+}
+function cycleAcct(){acctIdx=(acctIdx+1)%ACCOUNTS_LIST.length;document.getElementById('m-acct').textContent=ACCOUNTS_LIST[acctIdx];toast2('Account: '+ACCOUNTS_LIST[acctIdx]);}
+function renderCatGrid(type){
+  const cats=type==='income'?ICATS:ECATS;
+  document.getElementById('cgrid').innerHTML=cats.map(c=>`
+    <div class="ctile${selCat===c.id?' on':''}" onclick="pickCat('${c.id}','${c.nm}')">
+      <div class="ctile-ico" style="background:${c.bg}">${c.ico}</div>
+      <div class="ctile-nm">${c.nm}</div></div>`).join('');
+}
+function pickCat(id,nm){selCat=id;document.getElementById('m-cat').textContent=nm;document.getElementById('m-cat').className='frow-val';renderCatGrid(modalType);}
+function kp(k){
+  if(k==='del'){kval=kval.slice(0,-1);}else if(k==='.'&&kval.includes('.')){}else if(k==='00'){kval+='00';}else if((kval+k).replace(/\./g,'').length>10){}else{kval+=k;}
+  if(kval.startsWith('00'))kval=kval.replace(/^0+/,'');if(kval.startsWith('.'))kval='0'+kval;
+  const d=document.getElementById('m-amt');
+  if(!kval){d.textContent='0';d.className='amt-num';}
+  else{const pts=kval.split('.');d.textContent='₱'+parseInt(pts[0]||'0').toLocaleString('en-PH')+(pts.length>1?'.'+pts[1]:'');d.className='amt-num has'+(modalType==='income'?' ic':'');}
+}
+function saveEntry(){
+  const amt=parseFloat(kval)||0;
+  if(!amt){toast2('⚠ Enter an amount');return;}
+  if(!selCat){toast2('⚠ Choose a category');return;}
+  const ci=[...ECATS,...ICATS].find(c=>c.id===selCat)||ECATS[0];
+  const acct=document.getElementById('m-acct').textContent;
+  const note=document.getElementById('m-memo-input').value.trim();
+
+  ALL_TX.unshift({
+    id:genId(),
+    t:modalType==='income'?'income':'expense',
+    cat:ci.id,
+    nm:ci.nm,
+    acct,
+    amt,
+    date:'Jun 8',
+    note,
+    updatedAt:Date.now()
+  });
+
+  SyncEngine.queueChange('transactions');
+  renderTrans();
+  renderStats();
+  hideModal();
+  toast2('✔ '+ci.nm+' — ₱'+fmt(amt)+' saved');
+}
+
+/* ══════════════════════════════════════════════════════════
+   APP INITIALIZATION & AUTH STATE MONITORING
+══════════════════════════════════════════════════════════ */
+function initializeApp(){
+  applyTheme(currentTheme);
+  updateNetworkStatus();
+
+  const firebaseInitSuccess=initFirebaseIfAvailable();
+
+  if(firebaseInitSuccess&&firebaseAuth){
+    showAuthSpinner('Checking login session…');
+    firebaseAuth.onAuthStateChanged(user=>{
+      hideAuthSpinner();
+      if(user){
+        onUserAuthenticated(user);
+      } else {
+        const wasGuest=localStorage.getItem('mm_is_guest')==='true';
+        if(wasGuest){
+          continueAsGuest();
+        } else {
+          showAuthScreen('signin');
+        }
+      }
+    });
+  } else {
+    // Fallback: If Firebase is not configured or offline, enter guest mode directly
+    const wasGuest=localStorage.getItem('mm_is_guest')==='true';
+    if(wasGuest||!isFirebaseReady()){
+      continueAsGuest();
+    } else {
+      showAuthScreen('signin');
+    }
+  }
+}
+
+// Start app
+initializeApp();
+</script>
+</body>
+</html>
